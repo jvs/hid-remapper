@@ -91,6 +91,7 @@ add_executable(remapper_dual_a
     src/main.cc
     src/remapper.cc
     src/remapper_dual_a.cc
+    src/custom_keys.cc
     src/crc.cc
     src/descriptor_parser.cc
     src/tinyusb_stuff.cc
@@ -161,6 +162,7 @@ add_executable(remapper_serial
     src/main.cc
     src/remapper.cc
     src/remapper_serial.cc
+    src/custom_keys.cc
     src/crc.cc
     src/descriptor_parser.cc
     src/tinyusb_stuff.cc
