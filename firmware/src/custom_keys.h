@@ -1,4 +1,5 @@
-#pragma once
+#ifndef _CUSTOM_KEYS_H_
+#define _CUSTOM_KEYS_H_
 
 #include <stdint.h>
 
@@ -66,3 +67,4 @@ void custom_keys_process();
 #define HID_KEY_COMMA       0x00070036  // ,
 
 #define HID_MODIFIER_SHIFT  0x00070002
+#endif
