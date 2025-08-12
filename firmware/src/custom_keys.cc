@@ -1,7 +1,13 @@
 #include "custom_keys.h"
 #include "remapper.h"
 #include <hardware/timer.h>
+#include <hardware/gpio.h>
+#include <pico/time.h>
+#include <pico/stdio.h>
 #include <cstring>
+
+// Forward declaration for internal remapper function
+extern int32_t* get_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_absent = false, bool raw = false);
 
 // Timing constants (in microseconds)
 static const uint64_t COMBO_WINDOW = 50000;      // 50ms window for J+K combo
@@ -12,9 +18,7 @@ static const uint64_t TAP_HOLD_THRESHOLD = 200000; // 200ms tap-hold threshold
 enum CustomKeyState {
     STATE_NORMAL,
     STATE_LEADER_WAITING,
-    STATE_LEADER_FIRST,
-    STATE_COMBO_CANDIDATE_J,
-    STATE_COMBO_CANDIDATE_K
+    STATE_LEADER_FIRST
 };
 
 // Key state tracking
@@ -122,14 +126,28 @@ static char hid_to_letter(uint32_t usage) {
     return 0;
 }
 
-// Helper function to emit a key press
+// Helper function to emit a key press - directly set state to avoid recursion
 static void emit_key_press(uint32_t usage) {
-    set_input_state(usage, 1, 1, 0);
+    int32_t* state_ptr = get_state_ptr(usage, 0, true, true);
+    if (state_ptr != NULL) {
+        *state_ptr = 1;
+    }
+    state_ptr = get_state_ptr(usage, 0, true, false);
+    if (state_ptr != NULL) {
+        *state_ptr = 1;
+    }
 }
 
-// Helper function to emit a key release
+// Helper function to emit a key release - directly set state to avoid recursion
 static void emit_key_release(uint32_t usage) {
-    set_input_state(usage, 0, 0, 0);
+    int32_t* state_ptr = get_state_ptr(usage, 0, true, true);
+    if (state_ptr != NULL) {
+        *state_ptr = 0;
+    }
+    state_ptr = get_state_ptr(usage, 0, true, false);
+    if (state_ptr != NULL) {
+        *state_ptr = 0;
+    }
 }
 
 // Helper function to emit a key tap (press + release)
@@ -167,53 +185,29 @@ static bool key_just_released(const KeyState* state) {
     return !state->pressed && state->prev_pressed;
 }
 
-// Handle combo detection (J+K -> Escape)
-static void handle_combo_logic(uint32_t usage, bool pressed) {
-    uint64_t now = time_us_64();
-
+// Simple combo detection: if both J and K are pressed, emit Escape
+// Returns true if combo was detected (caller should block the keys)
+static bool handle_combo_logic(uint32_t usage, bool pressed) {
     if (usage == HID_KEY_J) {
         update_key_state(&j_state, pressed);
-
-        if (key_just_pressed(&j_state)) {
-            if (current_state == STATE_NORMAL) {
-                current_state = STATE_COMBO_CANDIDATE_J;
-                state_start_time = now;
-            } else if (current_state == STATE_COMBO_CANDIDATE_K &&
-                      (now - state_start_time < COMBO_WINDOW)) {
-                // K was pressed first, J pressed within window - combo detected!
-                emit_key_tap(HID_KEY_ESCAPE);
-                current_state = STATE_NORMAL;
-                return;
-            }
-        } else if (key_just_released(&j_state)) {
-            if (current_state == STATE_COMBO_CANDIDATE_J) {
-                // J released without K being pressed - normal J
-                emit_key_tap(HID_KEY_J);
-                current_state = STATE_NORMAL;
-            }
-        }
     } else if (usage == HID_KEY_K) {
         update_key_state(&k_state, pressed);
-
-        if (key_just_pressed(&k_state)) {
-            if (current_state == STATE_NORMAL) {
-                current_state = STATE_COMBO_CANDIDATE_K;
-                state_start_time = now;
-            } else if (current_state == STATE_COMBO_CANDIDATE_J &&
-                      (now - state_start_time < COMBO_WINDOW)) {
-                // J was pressed first, K pressed within window - combo detected!
-                emit_key_tap(HID_KEY_ESCAPE);
-                current_state = STATE_NORMAL;
-                return;
-            }
-        } else if (key_just_released(&k_state)) {
-            if (current_state == STATE_COMBO_CANDIDATE_K) {
-                // K released without J being pressed - normal K
-                emit_key_tap(HID_KEY_K);
-                current_state = STATE_NORMAL;
-            }
-        }
     }
+
+    // Check if both J and K are currently pressed
+    if (j_state.pressed && k_state.pressed) {
+        // Combo detected! Emit escape and reset states
+        emit_key_tap(HID_KEY_ESCAPE);
+
+        // Reset key states to avoid re-triggering
+        j_state.pressed = false;
+        k_state.pressed = false;
+
+        return true; // Block both keys
+    }
+
+    return false; // No combo, let keys pass through
+}
 }
 
 // Handle home row modifiers with sm_td-style timing
@@ -328,14 +322,20 @@ static void handle_mouse_movement(uint32_t usage, int32_t state_raw) {
         if (state_raw > 0) {
             if (alt_is_held) {
                 // Alt + down movement -> scroll down
-                set_input_state(HID_SCROLL_Y, -1, -1, 0);
+                int32_t* state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, true);
+                if (state_ptr != NULL) *state_ptr = -1;
+                state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, false);
+                if (state_ptr != NULL) *state_ptr = -1;
             } else {
                 emit_key_tap(HID_KEY_DOWN);
             }
         } else if (state_raw < 0) {
             if (alt_is_held) {
                 // Alt + up movement -> scroll up
-                set_input_state(HID_SCROLL_Y, 1, 1, 0);
+                int32_t* state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, true);
+                if (state_ptr != NULL) *state_ptr = 1;
+                state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, false);
+                if (state_ptr != NULL) *state_ptr = 1;
             } else {
                 emit_key_tap(HID_KEY_UP);
             }
@@ -345,6 +345,13 @@ static void handle_mouse_movement(uint32_t usage, int32_t state_raw) {
 
 // Initialize custom key handler
 void custom_keys_init() {
+    // Debug: Flash LED to show custom_keys_init was called
+    gpio_init(25);
+    gpio_set_dir(25, GPIO_OUT);
+    gpio_put(25, 1);
+    sleep_ms(200);
+    gpio_put(25, 0);
+
     current_state = STATE_NORMAL;
     memset(&j_state, 0, sizeof(j_state));
     memset(&k_state, 0, sizeof(k_state));
@@ -373,8 +380,11 @@ void custom_keys_handle_input_impl(uint32_t usage, int32_t state_raw, int32_t st
 
     // Handle combo detection (J+K -> Escape)
     if (usage == HID_KEY_J || usage == HID_KEY_K) {
-        handle_combo_logic(usage, pressed);
-        return; // Don't pass J/K through during combo detection
+        bool combo_detected = handle_combo_logic(usage, pressed);
+        if (combo_detected) {
+            return; // Combo was detected, don't pass the keys through
+        }
+        // If no combo, let keys pass through normally
     }
 
     // Handle home row modifiers (F -> Alt, D -> Ctrl)
@@ -404,6 +414,19 @@ void custom_keys_handle_input_impl(uint32_t usage, int32_t state_raw, int32_t st
 static bool in_custom_handler = false;
 
 void custom_keys_handle_input(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
+    // Debug: Flash LED on key input and log specific keys
+    static uint32_t call_count = 0;
+    call_count++;
+
+    // Debug specific keys we care about
+    if (usage == HID_KEY_J || usage == HID_KEY_K || usage == HID_KEY_F || usage == HID_KEY_D || usage == HID_KEY_CAPSLOCK) {
+        gpio_put(25, 1);
+        printf("DEBUG: usage=0x%08X, state_raw=%ld, pressed=%s\n",
+               (unsigned)usage, (long)state_raw, state_raw ? "true" : "false");
+        sleep_ms(100);
+        gpio_put(25, 0);
+    }
+
     if (!in_custom_handler) {
         in_custom_handler = true;
         custom_keys_handle_input_impl(usage, state_raw, state_scaled, hub_port);
@@ -417,29 +440,7 @@ void custom_keys_process() {
 
     // Handle timeouts
     switch (current_state) {
-        case STATE_COMBO_CANDIDATE_J:
-            if (now - state_start_time > COMBO_WINDOW) {
-                // Combo window expired - emit normal J
-                if (j_state.pressed) {
-                    emit_key_press(HID_KEY_J);
-                } else {
-                    emit_key_tap(HID_KEY_J);
-                }
-                current_state = STATE_NORMAL;
-            }
-            break;
-
-        case STATE_COMBO_CANDIDATE_K:
-            if (now - state_start_time > COMBO_WINDOW) {
-                // Combo window expired - emit normal K
-                if (k_state.pressed) {
-                    emit_key_press(HID_KEY_K);
-                } else {
-                    emit_key_tap(HID_KEY_K);
-                }
-                current_state = STATE_NORMAL;
-            }
-            break;
+        // No combo timeout logic needed with simple approach
 
         case STATE_LEADER_WAITING:
         case STATE_LEADER_FIRST:
