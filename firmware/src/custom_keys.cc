@@ -6,6 +6,9 @@
 #include <pico/stdio.h>
 #include <cstring>
 #include <cstdio>
+#include <hardware/pio.h>
+#include <hardware/clocks.h>
+#include <hardware/sync.h>
 
 
 // Timing constants (in microseconds)
@@ -52,6 +55,38 @@ static bool alt_is_held = false;
 
 // Recursion guard
 static bool in_custom_handler = false;
+
+// Simple NeoPixel control (assuming GPIO 16 for Feather RP2040)
+#define NEOPIXEL_PIN 16
+static void neopixel_set_color(uint8_t r, uint8_t g, uint8_t b) {
+    // Simple bit-bang NeoPixel control
+    gpio_init(NEOPIXEL_PIN);
+    gpio_set_dir(NEOPIXEL_PIN, GPIO_OUT);
+    
+    uint32_t color = (g << 16) | (r << 8) | b; // GRB format
+    
+    // Disable interrupts for timing-critical section
+    uint32_t interrupts = save_and_disable_interrupts();
+    
+    for (int bit = 23; bit >= 0; bit--) {
+        if (color & (1 << bit)) {
+            // Send 1: high for ~800ns, low for ~450ns
+            gpio_put(NEOPIXEL_PIN, 1);
+            sleep_us(1);
+            gpio_put(NEOPIXEL_PIN, 0);
+            sleep_us(1);
+        } else {
+            // Send 0: high for ~400ns, low for ~850ns  
+            gpio_put(NEOPIXEL_PIN, 1);
+            sleep_us(1);
+            gpio_put(NEOPIXEL_PIN, 0);
+            sleep_us(1);
+        }
+    }
+    
+    restore_interrupts(interrupts);
+    sleep_us(50); // Reset time
+}
 
 // Key states
 static KeyState j_state = {0};
@@ -181,7 +216,10 @@ static bool handle_combo_logic(uint32_t usage, bool pressed) {
 
     // Check if both J and K are currently pressed
     if (j_state.pressed && k_state.pressed) {
-        // Combo detected! Emit escape and reset states
+        // Combo detected! Flash purple to indicate escape
+        neopixel_set_color(128, 0, 128); // Purple for combo detected
+        
+        // Emit escape and reset states
         emit_key_tap(HID_KEY_ESCAPE);
 
         // Reset key states to avoid re-triggering
@@ -336,6 +374,9 @@ void custom_keys_init() {
     sleep_ms(200);
     gpio_put(25, 0);
 
+    // Debug: Set NeoPixel to blue to show init was called
+    neopixel_set_color(0, 0, 255); // Blue
+
     current_state = STATE_NORMAL;
     memset(&j_state, 0, sizeof(j_state));
     memset(&k_state, 0, sizeof(k_state));
@@ -399,13 +440,19 @@ void custom_keys_handle_input(uint32_t usage, int32_t state_raw, int32_t state_s
     static uint32_t call_count = 0;
     call_count++;
 
-    // Debug specific keys we care about
-    if (usage == HID_KEY_J || usage == HID_KEY_K || usage == HID_KEY_F || usage == HID_KEY_D || usage == HID_KEY_CAPSLOCK) {
-        gpio_put(25, 1);
-        printf("DEBUG: usage=0x%08X, state_raw=%ld, pressed=%s\n",
-               (unsigned)usage, (long)state_raw, state_raw ? "true" : "false");
-        sleep_ms(100);
-        gpio_put(25, 0);
+    // Debug specific keys we care about with NeoPixel colors
+    if (state_raw != 0) { // Only on key press, not release
+        if (usage == HID_KEY_J) {
+            neopixel_set_color(255, 0, 0); // Red for J
+        } else if (usage == HID_KEY_K) {
+            neopixel_set_color(255, 255, 0); // Yellow for K  
+        } else if (usage == HID_KEY_F) {
+            neopixel_set_color(0, 255, 0); // Green for F
+        } else if (usage == HID_KEY_D) {
+            neopixel_set_color(255, 0, 255); // Magenta for D
+        } else if (usage == HID_KEY_CAPSLOCK) {
+            neopixel_set_color(255, 255, 255); // White for CapsLock
+        }
     }
 
     if (!in_custom_handler) {
