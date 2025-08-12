@@ -37,7 +37,7 @@ void custom_keys_process();
 #define HID_KEY_BACKTICK    0x00070035  // `
 #define HID_KEY_EXCLAIM     0x0007001E  // ! (Shift + 1)
 #define HID_KEY_AT          0x0007001F  // @ (Shift + 2)
-#define HID_KEY_HASH        0x00070020  // # (Shift + 3)
+#define HID_KEY_HASH        0x00070020  // hash (Shift + 3)
 #define HID_KEY_DOLLAR      0x00070021  // $ (Shift + 4)
 #define HID_KEY_PERCENT     0x00070022  // % (Shift + 5)
 #define HID_KEY_CARET       0x00070023  // ^ (Shift + 6)
@@ -50,7 +50,7 @@ void custom_keys_process();
 #define HID_KEY_LBRACE      0x0007002F  // { (Shift + [)
 #define HID_KEY_RBRACE      0x00070030  // } (Shift + ])
 #define HID_KEY_PIPE        0x00070031  // | (Shift + \)
-#define HID_KEY_BACKSLASH   0x00070031  // \
+#define HID_KEY_BACKSLASH   0x00070031  // backslash
 #define HID_KEY_SLASH       0x00070038  // /
 #define HID_KEY_QUOTE       0x00070034  // '
 #define HID_KEY_DQUOTE      0x00070034  // " (Shift + ')

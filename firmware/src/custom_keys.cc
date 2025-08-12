@@ -63,7 +63,7 @@ static const LeaderSequence leader_sequences[] = {
     {'b', 't', HID_KEY_BACKTICK, false},                // bt -> `
     {'e', 'x', HID_KEY_EXCLAIM, true},                  // ex -> !
     {'a', 't', HID_KEY_AT, true},                       // at -> @
-    {'h', 'a', HID_KEY_HASH, true},                     // ha -> #
+    {'h', 'a', HID_KEY_HASH, true},                     // ha -> hash
     {'d', 'o', HID_KEY_DOLLAR, true},                   // do -> $
     {'d', 'l', HID_KEY_DOLLAR, true},                   // dl -> $
     {'p', 'c', HID_KEY_PERCENT, true},                  // pc -> %
