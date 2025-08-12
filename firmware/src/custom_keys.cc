@@ -7,8 +7,6 @@
 #include <cstring>
 #include <cstdio>
 
-// Forward declaration for internal remapper function
-extern int32_t* get_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_absent = false, bool raw = false);
 
 // Timing constants (in microseconds)
 static const uint64_t COMBO_WINDOW = 50000;      // 50ms window for J+K combo
@@ -51,6 +49,9 @@ static CustomKeyState current_state = STATE_NORMAL;
 static uint64_t state_start_time = 0;
 static uint32_t leader_first_key = 0;
 static bool alt_is_held = false;
+
+// Recursion guard
+static bool in_custom_handler = false;
 
 // Key states
 static KeyState j_state = {0};
@@ -120,28 +121,22 @@ static char hid_to_letter(uint32_t usage) {
     return 0;
 }
 
-// Helper function to emit a key press - directly set state to avoid recursion
+// Helper function to emit a key press - use recursion guard
 static void emit_key_press(uint32_t usage) {
-    int32_t* state_ptr = get_state_ptr(usage, 0, true, true);
-    if (state_ptr != NULL) {
-        *state_ptr = 1;
-    }
-    state_ptr = get_state_ptr(usage, 0, true, false);
-    if (state_ptr != NULL) {
-        *state_ptr = 1;
-    }
+    // Temporarily disable custom handler to avoid recursion
+    bool was_in_handler = in_custom_handler;
+    in_custom_handler = true;
+    set_input_state(usage, 1, 1, 0);
+    in_custom_handler = was_in_handler;
 }
 
-// Helper function to emit a key release - directly set state to avoid recursion
+// Helper function to emit a key release - use recursion guard
 static void emit_key_release(uint32_t usage) {
-    int32_t* state_ptr = get_state_ptr(usage, 0, true, true);
-    if (state_ptr != NULL) {
-        *state_ptr = 0;
-    }
-    state_ptr = get_state_ptr(usage, 0, true, false);
-    if (state_ptr != NULL) {
-        *state_ptr = 0;
-    }
+    // Temporarily disable custom handler to avoid recursion
+    bool was_in_handler = in_custom_handler;
+    in_custom_handler = true;
+    set_input_state(usage, 0, 0, 0);
+    in_custom_handler = was_in_handler;
 }
 
 // Helper function to emit a key tap (press + release)
@@ -311,20 +306,20 @@ static void handle_mouse_movement(uint32_t usage, int32_t state_raw) {
         if (state_raw > 0) {
             if (alt_is_held) {
                 // Alt + down movement -> scroll down
-                int32_t* state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, true);
-                if (state_ptr != NULL) *state_ptr = -1;
-                state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, false);
-                if (state_ptr != NULL) *state_ptr = -1;
+                bool was_in_handler = in_custom_handler;
+                in_custom_handler = true;
+                set_input_state(HID_SCROLL_Y, -1, -1, 0);
+                in_custom_handler = was_in_handler;
             } else {
                 emit_key_tap(HID_KEY_DOWN);
             }
         } else if (state_raw < 0) {
             if (alt_is_held) {
                 // Alt + up movement -> scroll up
-                int32_t* state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, true);
-                if (state_ptr != NULL) *state_ptr = 1;
-                state_ptr = get_state_ptr(HID_SCROLL_Y, 0, true, false);
-                if (state_ptr != NULL) *state_ptr = 1;
+                bool was_in_handler = in_custom_handler;
+                in_custom_handler = true;
+                set_input_state(HID_SCROLL_Y, 1, 1, 0);
+                in_custom_handler = was_in_handler;
             } else {
                 emit_key_tap(HID_KEY_UP);
             }
@@ -398,9 +393,6 @@ void custom_keys_handle_input_impl(uint32_t usage, int32_t state_raw, int32_t st
     // Handle leader key sequences
     handle_leader_key(usage, pressed);
 }
-
-// Recursion guard
-static bool in_custom_handler = false;
 
 void custom_keys_handle_input(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
     // Debug: Flash LED on key input and log specific keys
