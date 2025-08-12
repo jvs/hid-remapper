@@ -1734,6 +1734,8 @@ void handle_received_midi(uint8_t hub_port, uint8_t* midi_msg) {
 }
 
 void set_input_state(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
+    custom_keys_handle_input(usage, state_raw, state_scaled, hub_port);
+
     int32_t* state_ptr = get_state_ptr(usage, hub_port, false, true);
     if (state_ptr != NULL) {
         *state_ptr = state_raw;
@@ -1742,7 +1744,6 @@ void set_input_state(uint32_t usage, int32_t state_raw, int32_t state_scaled, ui
     if (state_ptr != NULL) {
         *state_ptr = state_scaled;
     }
-    custom_keys_handle_input(usage, state_raw, state_scaled, hub_port);
 }
 
 void rlencode(const std::set<uint64_t>& usage_ranges, std::vector<usage_rle_t>& output) {

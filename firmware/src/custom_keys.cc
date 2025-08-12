@@ -355,7 +355,7 @@ void custom_keys_init() {
 }
 
 // Handle input events
-void custom_keys_handle_input(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
+void custom_keys_handle_input_impl(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
     bool pressed = (state_raw != 0);
 
     // Track Alt state for mouse scrolling
@@ -398,6 +398,17 @@ void custom_keys_handle_input(uint32_t usage, int32_t state_raw, int32_t state_s
 
     // Handle leader key sequences
     handle_leader_key(usage, pressed);
+}
+
+// Recursion guard
+static bool in_custom_handler = false;
+
+void custom_keys_handle_input(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
+    if (!in_custom_handler) {
+        in_custom_handler = true;
+        custom_keys_handle_input_impl(usage, state_raw, state_scaled, hub_port);
+        in_custom_handler = false;
+    }
 }
 
 // Process timing and state transitions
