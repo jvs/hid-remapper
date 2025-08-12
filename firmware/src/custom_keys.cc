@@ -5,6 +5,7 @@
 #include <pico/time.h>
 #include <pico/stdio.h>
 #include <cstring>
+#include <cstdio>
 
 // Forward declaration for internal remapper function
 extern int32_t* get_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_absent = false, bool raw = false);
@@ -110,13 +111,6 @@ static const LeaderSequence leader_sequences[] = {
 
 static const size_t NUM_LEADER_SEQUENCES = sizeof(leader_sequences) / sizeof(leader_sequences[0]);
 
-// Helper function to convert letter HID codes
-static uint32_t letter_to_hid(char c) {
-    if (c >= 'a' && c <= 'z') {
-        return 0x00070004 + (c - 'a');
-    }
-    return 0;
-}
 
 // Helper function to convert HID usage code to character (for leader sequences)
 static char hid_to_letter(uint32_t usage) {
@@ -180,10 +174,6 @@ static bool key_just_pressed(const KeyState* state) {
     return state->pressed && !state->prev_pressed;
 }
 
-// Check if a key just transitioned from pressed to released
-static bool key_just_released(const KeyState* state) {
-    return !state->pressed && state->prev_pressed;
-}
 
 // Simple combo detection: if both J and K are pressed, emit Escape
 // Returns true if combo was detected (caller should block the keys)
@@ -207,7 +197,6 @@ static bool handle_combo_logic(uint32_t usage, bool pressed) {
     }
 
     return false; // No combo, let keys pass through
-}
 }
 
 // Handle home row modifiers with sm_td-style timing
