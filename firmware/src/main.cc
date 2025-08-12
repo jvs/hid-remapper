@@ -249,6 +249,7 @@ int main() {
     extra_init();
     tusb_init();
     stdio_init_all();
+    custom_keys_init();
 
     tud_sof_isr_set(sof_handler);
 

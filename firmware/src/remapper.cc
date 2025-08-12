@@ -16,6 +16,7 @@
 #include "our_descriptor.h"
 #include "platform.h"
 #include "remapper.h"
+#include "custom_keys.h"
 
 #define MAX_REPORT_SIZE 64
 
@@ -1094,6 +1095,8 @@ void process_mapping(bool auto_repeat) {
     uint64_t now = get_time();
     frame_counter++;
 
+    custom_keys_process();
+
     for (auto& tap_hold : tap_hold_usages) {
         if ((*tap_hold.input_state != 0) && (*(tap_hold.input_state + PREV_STATE_OFFSET) == 0)) {
             tap_hold.pressed_at = now;
@@ -1739,6 +1742,7 @@ void set_input_state(uint32_t usage, int32_t state_raw, int32_t state_scaled, ui
     if (state_ptr != NULL) {
         *state_ptr = state_scaled;
     }
+    custom_keys_handle_input(usage, state_raw, state_scaled, hub_port);
 }
 
 void rlencode(const std::set<uint64_t>& usage_ranges, std::vector<usage_rle_t>& output) {
