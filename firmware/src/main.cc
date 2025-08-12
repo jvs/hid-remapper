@@ -28,6 +28,7 @@
 #include "platform.h"
 #include "remapper.h"
 #include "tick.h"
+#include "custom_keys.h"
 
 // RP2350 UF2s wipe the last sector of flash every time
 // because of RP2350-E10 errata mitigation. So we put
