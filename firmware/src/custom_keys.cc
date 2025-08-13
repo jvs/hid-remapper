@@ -6,8 +6,6 @@
 #include <pico/stdio.h>
 #include <cstring>
 #include <cstdio>
-#include <hardware/pio.h>
-#include <hardware/clocks.h>
 #include <hardware/sync.h>
 
 
