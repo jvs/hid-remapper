@@ -30,7 +30,6 @@ const uint32_t REGISTER_USAGE_PAGE = 0xFFF50000;
 
 const uint32_t ROLLOVER_USAGE = 0x00070001;
 
-const uint16_t STACK_SIZE = 16;
 
 const uint8_t resolution_multiplier_masks[] = {
     V_RESOLUTION_BITMASK,
@@ -1079,11 +1078,6 @@ void print_stats() {
     processing_time = 0;
 }
 
-void reset_state() {
-    memset(registers, 0, sizeof(registers));
-    accumulated.clear();
-    frame_counter = 0;
-}
 
 void set_monitor_enabled(bool enabled) {
     if (monitor_enabled != enabled) {
