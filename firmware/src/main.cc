@@ -178,7 +178,7 @@ int main() {
     tick_init();
     our_descriptor = &our_descriptors[our_descriptor_number];
     parse_our_descriptor();
-    // set_mapping_from_config();
+    set_mapping_from_config();
     board_init();
     extra_init();
     tusb_init();
@@ -218,7 +218,7 @@ int main() {
             suspended = false;
         }
         if (config_updated) {
-            // set_mapping_from_config();
+            set_mapping_from_config();
             config_updated = false;
         }
         if (set_gpio_dir_pending && !suspended) {
