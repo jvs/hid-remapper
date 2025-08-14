@@ -70,15 +70,6 @@ struct register_ptrs_t {
 };
 
 
-struct __attribute__((packed)) mapping_config11_t {
-    uint32_t target_usage;
-    uint32_t source_usage;
-    int32_t scaling;  // * 1000
-    uint8_t layer_mask;
-    uint8_t flags;
-    uint8_t hub_ports = 0;
-};
-
 #define QUIRK_FLAG_RELATIVE_MASK 0b10000000
 #define QUIRK_FLAG_SIGNED_MASK 0b01000000
 #define QUIRK_SIZE_MASK 0b00111111
