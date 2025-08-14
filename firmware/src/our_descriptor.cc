@@ -2,6 +2,7 @@
 
 #include "globals.h"
 #include "our_descriptor.h"
+#include "ps_auth.h"
 #include "remapper.h"
 
 const uint8_t REPORT_ID_MOUSE = 1;
