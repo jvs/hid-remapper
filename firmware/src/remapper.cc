@@ -212,8 +212,6 @@ void set_mapping_from_config() {
     usage_state_ptr.clear();
     register_ptrs.clear();
     memset(input_state, 0, sizeof(input_state));
-    uint32_t gpio_in_mask_ = 0;
-    uint32_t gpio_out_mask_ = 0;
 
 
     if (unmapped_passthrough_layer_mask) {
@@ -349,7 +347,7 @@ void set_mapping_from_config() {
         }
     }
 
-    set_gpio_inout_masks(gpio_in_mask_, gpio_out_mask_);
+    set_gpio_inout_masks(0, 0);
     update_their_descriptor_derivates();
 }
 
