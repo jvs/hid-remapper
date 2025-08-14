@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <types.h>
 
-void do_persist_config(uint8_t* buffer);
-
 void reset_to_bootloader();
 void pair_new_device();
 void clear_bonds();
