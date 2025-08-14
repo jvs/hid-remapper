@@ -5,6 +5,7 @@
 #include "config.h"
 #include "crc.h"
 #include "globals.h"
+#include "interval_override.h"
 #include "our_descriptor.h"
 #include "platform.h"
 #include "remapper.h"

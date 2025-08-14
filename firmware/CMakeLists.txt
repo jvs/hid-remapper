@@ -38,6 +38,7 @@ add_executable(remapper
     src/globals.cc
     src/config.cc
     src/quirks.cc
+    src/interval_override.cc
     src/out_report.cc
     src/tick.cc
     src/activity_led.cc
