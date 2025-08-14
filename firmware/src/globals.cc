@@ -25,7 +25,6 @@ volatile bool config_updated = false;
 uint32_t partial_scroll_timeout = 1000000;
 uint64_t gpio_debounce_time = 5000;
 uint8_t our_descriptor_number = 0;
-bool ignore_auth_dev_inputs = false;
 uint8_t gpio_output_mode = 0;
 
 uint8_t resolution_multiplier = 0;

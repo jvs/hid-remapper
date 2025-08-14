@@ -32,12 +32,10 @@ extern volatile bool config_updated;
 extern uint32_t partial_scroll_timeout;
 extern uint64_t gpio_debounce_time;
 extern uint8_t our_descriptor_number;
-extern bool ignore_auth_dev_inputs;
 extern uint8_t gpio_output_mode;
 
 
 extern uint8_t resolution_multiplier;
-
 
 
 extern bool monitor_enabled;
