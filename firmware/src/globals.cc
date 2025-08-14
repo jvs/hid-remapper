@@ -29,7 +29,6 @@ uint64_t gpio_debounce_time = 5000;
 uint8_t our_descriptor_number = 0;
 bool ignore_auth_dev_inputs = false;
 uint8_t gpio_output_mode = 0;
-bool normalize_gamepad_inputs = true;
 
 std::vector<mapping_config11_t> config_mappings;
 

@@ -36,7 +36,6 @@ extern uint64_t gpio_debounce_time;
 extern uint8_t our_descriptor_number;
 extern bool ignore_auth_dev_inputs;
 extern uint8_t gpio_output_mode;
-extern bool normalize_gamepad_inputs;
 
 extern std::vector<mapping_config11_t> config_mappings;
 
