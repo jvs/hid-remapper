@@ -23,8 +23,6 @@ void set_input_state(uint32_t usage, int32_t state_raw, int32_t state_scaled, ui
 void extra_init();
 void read_report(bool* new_report, bool* tick);
 
-void interval_override_updated();
-
 void parse_our_descriptor();
 void process_mapping(bool auto_repeat);
 void update_their_descriptor_derivates();

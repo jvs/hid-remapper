@@ -48,9 +48,6 @@ void read_report(bool* new_report, bool* tick) {
     *new_report = reports_received;
 }
 
-void interval_override_updated() {
-}
-
 void flash_b_side() {
 }
 
