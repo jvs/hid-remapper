@@ -84,13 +84,6 @@ enum class Op : int8_t {
     DEADZONE2 = 54,
 };
 
-struct tap_hold_state_t {
-    bool tap : 1;
-    bool hold : 1;
-    bool prev_hold : 1;
-};
-
-
 struct map_source_t {
     uint32_t usage;
     int32_t scaling = 1000;  // * 1000
@@ -101,7 +94,6 @@ struct map_source_t {
     uint8_t orig_source_port = 0;
     uint8_t layer_mask = 1;
     int32_t* input_state;
-    tap_hold_state_t* tap_hold_state;
     int32_t accumulated_scroll;
     uint64_t last_scroll_timestamp;  // XXX we can make this 32 or less bits
 };
@@ -122,12 +114,6 @@ struct reverse_mapping_t {
     bool is_relative = false;
     std::vector<out_usage_def_t> our_usages;
     std::vector<map_source_t> sources;
-};
-
-struct tap_hold_usage_t {
-    int32_t* input_state;
-    tap_hold_state_t* tap_hold_state;
-    uint64_t pressed_at;
 };
 
 struct usage_rle_t {

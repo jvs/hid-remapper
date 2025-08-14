@@ -24,7 +24,6 @@ volatile bool config_updated = false;
 
 uint8_t unmapped_passthrough_layer_mask = 0b11111111;
 uint32_t partial_scroll_timeout = 1000000;
-uint32_t tap_hold_threshold = 200000;
 uint64_t gpio_debounce_time = 5000;
 uint8_t our_descriptor_number = 0;
 bool ignore_auth_dev_inputs = false;

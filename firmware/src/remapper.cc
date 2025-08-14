@@ -50,8 +50,6 @@ std::unordered_map<uint16_t, std::unordered_map<uint8_t, std::vector<usage_usage
 std::unordered_map<uint16_t, std::unordered_map<uint8_t, std::vector<int32_t*>>> array_range_usages;          // dev_addr+interface -> report_id -> input_state ptr vector
 std::unordered_map<uint16_t, std::unordered_map<uint8_t, std::vector<usage_def_t>>> rollover_usages;          // dev_addr+interface -> report_id -> usage_def vector
 
-std::vector<tap_hold_usage_t> tap_hold_usages;
-
 
 std::vector<usage_usage_def_t> our_array_range_usages;
 
@@ -74,7 +72,6 @@ std::vector<uint8_t> report_ids;
 #define PREV_STATE_OFFSET MAX_INPUT_STATES
 
 int32_t input_state[MAX_INPUT_STATES * 2];
-tap_hold_state_t tap_hold_state[MAX_INPUT_STATES];
 std::unordered_map<uint64_t, int32_t*> usage_state_ptr;  // usage -> input_state pointer
 uint32_t used_state_slots = 0;
 
@@ -207,19 +204,9 @@ inline int32_t* get_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_a
     return NULL;
 }
 
-inline tap_hold_state_t* get_tap_hold_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_absent = false) {
-    int32_t* state_ptr = get_state_ptr(usage, hub_port, assign_if_absent);
-    if (state_ptr != NULL) {
-        return tap_hold_state + (state_ptr - input_state);
-    }
-
-    return NULL;
-}
-
 
 void set_mapping_from_config() {
     std::unordered_map<uint64_t, std::vector<map_source_t>> reverse_mapping_map;  // hub_port+target -> sources list
-    std::unordered_set<uint64_t> tap_hold_usage_set;
     std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
 
 
@@ -229,7 +216,6 @@ void set_mapping_from_config() {
     usage_state_ptr.clear();
     register_ptrs.clear();
     memset(input_state, 0, sizeof(input_state));
-    memset(tap_hold_state, 0, sizeof(tap_hold_state));
     uint32_t gpio_in_mask_ = 0;
     uint32_t gpio_out_mask_ = 0;
 
@@ -267,7 +253,6 @@ void set_mapping_from_config() {
                 .orig_source_port = orig_source_port,
                 .layer_mask = layer_mask,
                 .input_state = get_state_ptr(mapping.source_usage, source_port),
-                .tap_hold_state = get_tap_hold_state_ptr(mapping.source_usage, source_port),
             });
 
             if ((mapping.source_usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
@@ -278,26 +263,8 @@ void set_mapping_from_config() {
             }
         }
         mapped_on_layers[mapping.source_usage] |= layer_mask;  // usage mapped on any hub_port is considered to be mapped
-        if (((mapping.flags & MAPPING_FLAG_TAP) != 0) ||
-            ((mapping.flags & MAPPING_FLAG_HOLD) != 0)) {
-            tap_hold_usage_set.insert(((uint64_t) source_port << 32) | mapping.source_usage);
-        }
     }
 
-
-    tap_hold_usages.clear();
-
-    for (auto const hub_port_usage : tap_hold_usage_set) {
-        uint32_t usage = hub_port_usage & 0xFFFFFFFF;
-        uint8_t hub_port = hub_port_usage >> 32;
-        int32_t* state_ptr = get_state_ptr(usage, hub_port);
-        if (state_ptr != NULL) {
-            tap_hold_usages.push_back((tap_hold_usage_t){
-                .input_state = state_ptr,
-                .tap_hold_state = get_tap_hold_state_ptr(usage, hub_port),
-            });
-        }
-    }
 
     if (unmapped_passthrough_layer_mask) {
         for (auto const& [usage, usage_def] : our_usages_flat) {
@@ -494,39 +461,8 @@ void process_mapping(bool auto_repeat) {
     uint64_t now = get_time();
     frame_counter++;
 
-    for (auto& tap_hold : tap_hold_usages) {
-        if ((*tap_hold.input_state != 0) && (*(tap_hold.input_state + PREV_STATE_OFFSET) == 0)) {
-            tap_hold.pressed_at = now;
-        }
-        tap_hold.tap_hold_state->tap =
-            (*tap_hold.input_state == 0) && (*(tap_hold.input_state + PREV_STATE_OFFSET) != 0) &&
-            (now - tap_hold.pressed_at < tap_hold_threshold);
-        tap_hold.tap_hold_state->prev_hold = tap_hold.tap_hold_state->hold;
-        tap_hold.tap_hold_state->hold =
-            (*tap_hold.input_state != 0) &&
-            (now - tap_hold.pressed_at >= tap_hold_threshold);
-    }
 
-
-    uint8_t new_layer_state_mask = 0;
-    for (auto const& rev_map : reverse_mapping_layers) {
-        uint16_t i = rev_map.target & 0xFFFF;
-        for (auto const& map_source : rev_map.sources) {
-            if ((map_source.layer_mask & layer_state_mask) &&
-                (map_source.hold
-                        ? map_source.tap_hold_state->hold
-                        : *map_source.input_state)) {
-                new_layer_state_mask |= 1 << i;
-            }
-        }
-    }
-
-    // if no layer is active then layer 0 is active
-    if (new_layer_state_mask == 0) {
-        new_layer_state_mask = 1;
-    }
-
-    layer_state_mask = new_layer_state_mask;
+    layer_state_mask = 1;
 
 
     for (auto const& reg_ptr : register_ptrs) {
@@ -555,7 +491,7 @@ void process_mapping(bool auto_repeat) {
                 int32_t value = 0;
                 if (auto_repeat || map_source.is_relative) {
                     if (layer_state_mask & map_source.layer_mask) {
-                        value = map_source.hold ? map_source.tap_hold_state->hold : *map_source.input_state;
+                        value = *map_source.input_state;
                         if (map_source.is_binary) {
                             value = !!value;
                         }
@@ -581,8 +517,7 @@ void process_mapping(bool auto_repeat) {
                     continue;
                 }
                 if ((layer_state_mask & map_source.layer_mask)) {
-                    if ((map_source.tap && map_source.tap_hold_state->tap) ||
-                        (map_source.hold && map_source.tap_hold_state->hold)) {
+                    if (map_source.tap || map_source.hold) {
                         value += 1 * map_source.scaling / 1000 - rev_map.default_value;
                     }
                     if (!map_source.tap && !map_source.hold) {
