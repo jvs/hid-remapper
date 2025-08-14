@@ -38,8 +38,8 @@ const uint8_t resolution_multiplier_masks[] = {
     H_RESOLUTION_BITMASK,
 };
 
-std::vector<reverse_mapping_t> reverse_mapping;
-std::vector<reverse_mapping_t> reverse_mapping_layers;
+// std::vector<reverse_mapping_t> reverse_mapping;
+// std::vector<reverse_mapping_t> reverse_mapping_layers;
 
 std::unordered_map<uint8_t, std::unordered_map<uint32_t, usage_def_t>> our_usages;  // report_id -> usage -> usage_def
 std::unordered_map<uint32_t, usage_def_t> our_usages_flat;
@@ -206,14 +206,12 @@ void set_mapping_from_config() {
     std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
 
 
-    reverse_mapping.clear();
-    reverse_mapping_layers.clear();
+    // reverse_mapping.clear();
+    // reverse_mapping_layers.clear();
     used_state_slots = 0;
     usage_state_ptr.clear();
     register_ptrs.clear();
     memset(input_state, 0, sizeof(input_state));
-    uint32_t gpio_in_mask_ = 0;
-    uint32_t gpio_out_mask_ = 0;
 
 
     if (unmapped_passthrough_layer_mask) {
@@ -342,14 +340,14 @@ void set_mapping_from_config() {
                 }
             }
         }
-        if ((target & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
-            reverse_mapping_layers.push_back(rev_map);
-        } else {
-            reverse_mapping.push_back(rev_map);
-        }
+        // if ((target & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
+        //     reverse_mapping_layers.push_back(rev_map);
+        // } else {
+        //     reverse_mapping.push_back(rev_map);
+        // }
     }
 
-    set_gpio_inout_masks(gpio_in_mask_, gpio_out_mask_);
+    set_gpio_inout_masks(0, 0);
     update_their_descriptor_derivates();
 }
 
@@ -414,102 +412,102 @@ void process_mapping(bool auto_repeat) {
     digipot_state[4] = 0;
     digipot_state[5] = 0;
 
-    for (auto& rev_map : reverse_mapping) {
-        uint32_t target = rev_map.target;
-        bool register_target = (target & 0xFFFF0000) == REGISTER_USAGE_PAGE;
-        if (rev_map.is_relative) {
-            for (auto& map_source : rev_map.sources) {
-                if ((map_source.orig_source_port != 0) &&
-                    !(active_ports_mask & (1 << map_source.orig_source_port))) {
-                    continue;
-                }
-                int32_t value = 0;
-                if (auto_repeat || map_source.is_relative) {
-                    if (layer_state_mask & map_source.layer_mask) {
-                        value = *map_source.input_state;
-                        if (map_source.is_binary) {
-                            value = !!value;
-                        }
-                        value *= map_source.scaling;
-                        if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                            value /= 1000;
-                        }
-                    }
-                }
-                if (value != 0) {
-                    if (target == V_SCROLL_USAGE || target == H_SCROLL_USAGE) {
-                        accumulated[target] += handle_scroll(map_source, target, value * RESOLUTION_MULTIPLIER, now);
-                    } else {
-                        accumulated[target] += value;
-                    }
-                }
-            }
-        } else {  // our_usage is absolute
-            int32_t value = rev_map.default_value;
-            for (auto const& map_source : rev_map.sources) {
-                if ((map_source.orig_source_port != 0) &&
-                    !(active_ports_mask & (1 << map_source.orig_source_port))) {
-                    continue;
-                }
-                if ((layer_state_mask & map_source.layer_mask)) {
-                    if (map_source.tap || map_source.hold) {
-                        value += 1 * map_source.scaling / 1000 - rev_map.default_value;
-                    }
-                    if (!map_source.tap && !map_source.hold) {
-                        if (map_source.is_relative && !register_target) {
-                            if (*map_source.input_state * map_source.scaling > 0) {
-                                value += 1;
-                            }
-                        } else {
-                            if ((*map_source.input_state != 0) || (rev_map.default_value != 0)) {
-                                int32_t candidate = *map_source.input_state;
-                                if (map_source.is_binary) {
-                                    candidate = !!candidate;
-                                }
-                                if ((candidate != 0) || !map_source.is_binary) {
-                                    candidate = (int64_t) candidate * map_source.scaling / 1000;
-                                    if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                                        candidate /= 1000;
-                                    }
-                                    if (candidate != rev_map.default_value) {
-                                        value += candidate - rev_map.default_value;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            // we don't currently have any absolute usages that can be negative
-            if ((value < 0) && !register_target) {
-                value = 0;
-            }
-            if (register_target) {
-                value *= 1000;
-            }
-            if ((value != rev_map.default_value) || register_target) {
-                for (auto const& out_usage_def : rev_map.our_usages) {
-                    if (out_usage_def.array_count == 0) {
-                        uint32_t effective_value = value;
-                        if ((out_usage_def.size < 32) && (effective_value > ((1 << out_usage_def.size) - 1))) {
-                            effective_value = (1 << out_usage_def.size) - 1;
-                        }
-                        put_bits(out_usage_def.data, out_usage_def.len, out_usage_def.bitpos, out_usage_def.size, effective_value);
-                    } else {  // array range
-                        for (int i = 0; i < out_usage_def.array_count; i++) {
-                            int32_t existing_val = get_bits(out_usage_def.data, out_usage_def.len, out_usage_def.bitpos + i * out_usage_def.size, out_usage_def.size);
-                            // theoretically zero could be a valid index, but let's ignore that for now
-                            if (existing_val == 0) {
-                                put_bits(out_usage_def.data, out_usage_def.len, out_usage_def.bitpos + i * out_usage_def.size, out_usage_def.size, out_usage_def.array_index);
-                                break;
-                            }
-                        }
-                        // we don't do RollOver
-                    }
-                }
-            }
-        }
-    }
+    // for (auto& rev_map : reverse_mapping) {
+    //     uint32_t target = rev_map.target;
+    //     bool register_target = (target & 0xFFFF0000) == REGISTER_USAGE_PAGE;
+    //     if (rev_map.is_relative) {
+    //         for (auto& map_source : rev_map.sources) {
+    //             if ((map_source.orig_source_port != 0) &&
+    //                 !(active_ports_mask & (1 << map_source.orig_source_port))) {
+    //                 continue;
+    //             }
+    //             int32_t value = 0;
+    //             if (auto_repeat || map_source.is_relative) {
+    //                 if (layer_state_mask & map_source.layer_mask) {
+    //                     value = *map_source.input_state;
+    //                     if (map_source.is_binary) {
+    //                         value = !!value;
+    //                     }
+    //                     value *= map_source.scaling;
+    //                     if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
+    //                         value /= 1000;
+    //                     }
+    //                 }
+    //             }
+    //             if (value != 0) {
+    //                 if (target == V_SCROLL_USAGE || target == H_SCROLL_USAGE) {
+    //                     accumulated[target] += handle_scroll(map_source, target, value * RESOLUTION_MULTIPLIER, now);
+    //                 } else {
+    //                     accumulated[target] += value;
+    //                 }
+    //             }
+    //         }
+    //     } else {  // our_usage is absolute
+    //         int32_t value = rev_map.default_value;
+    //         for (auto const& map_source : rev_map.sources) {
+    //             if ((map_source.orig_source_port != 0) &&
+    //                 !(active_ports_mask & (1 << map_source.orig_source_port))) {
+    //                 continue;
+    //             }
+    //             if ((layer_state_mask & map_source.layer_mask)) {
+    //                 if (map_source.tap || map_source.hold) {
+    //                     value += 1 * map_source.scaling / 1000 - rev_map.default_value;
+    //                 }
+    //                 if (!map_source.tap && !map_source.hold) {
+    //                     if (map_source.is_relative && !register_target) {
+    //                         if (*map_source.input_state * map_source.scaling > 0) {
+    //                             value += 1;
+    //                         }
+    //                     } else {
+    //                         if ((*map_source.input_state != 0) || (rev_map.default_value != 0)) {
+    //                             int32_t candidate = *map_source.input_state;
+    //                             if (map_source.is_binary) {
+    //                                 candidate = !!candidate;
+    //                             }
+    //                             if ((candidate != 0) || !map_source.is_binary) {
+    //                                 candidate = (int64_t) candidate * map_source.scaling / 1000;
+    //                                 if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
+    //                                     candidate /= 1000;
+    //                                 }
+    //                                 if (candidate != rev_map.default_value) {
+    //                                     value += candidate - rev_map.default_value;
+    //                                 }
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         // we don't currently have any absolute usages that can be negative
+    //         if ((value < 0) && !register_target) {
+    //             value = 0;
+    //         }
+    //         if (register_target) {
+    //             value *= 1000;
+    //         }
+    //         if ((value != rev_map.default_value) || register_target) {
+    //             for (auto const& out_usage_def : rev_map.our_usages) {
+    //                 if (out_usage_def.array_count == 0) {
+    //                     uint32_t effective_value = value;
+    //                     if ((out_usage_def.size < 32) && (effective_value > ((1 << out_usage_def.size) - 1))) {
+    //                         effective_value = (1 << out_usage_def.size) - 1;
+    //                     }
+    //                     put_bits(out_usage_def.data, out_usage_def.len, out_usage_def.bitpos, out_usage_def.size, effective_value);
+    //                 } else {  // array range
+    //                     for (int i = 0; i < out_usage_def.array_count; i++) {
+    //                         int32_t existing_val = get_bits(out_usage_def.data, out_usage_def.len, out_usage_def.bitpos + i * out_usage_def.size, out_usage_def.size);
+    //                         // theoretically zero could be a valid index, but let's ignore that for now
+    //                         if (existing_val == 0) {
+    //                             put_bits(out_usage_def.data, out_usage_def.len, out_usage_def.bitpos + i * out_usage_def.size, out_usage_def.size, out_usage_def.array_index);
+    //                             break;
+    //                         }
+    //                     }
+    //                     // we don't do RollOver
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
 
     for (auto state : relative_usages) {
@@ -993,29 +991,29 @@ void update_their_descriptor_derivates() {
     their_usages_rle.clear();
     rlencode(their_usage_ranges_set, their_usages_rle);
 
-    for (auto& rev_map : reverse_mapping) {
-        for (auto& map_source : rev_map.sources) {
-            map_source.is_relative = relative_usage_set.count(map_source.input_state) > 0;
-            map_source.is_binary = (binary_usage_set.count(map_source.input_state) > 0) ||
-                                   ((map_source.usage & 0xFFFF0000) == GPIO_USAGE_PAGE);
-        }
-        auto search = their_out_usages_flat.find(rev_map.target);
-        if (search != their_out_usages_flat.end()) {
-            rev_map.our_usages.clear();
-            for (auto dev_addr_int_rep_id : search->second) {
-                uint8_t hub_port = hub_ports[dev_addr_int_rep_id >> 24];
-                if ((rev_map.hub_port == 0) || (rev_map.hub_port == hub_port)) {
-                    auto const& our_usage2 = their_out_usages[dev_addr_int_rep_id >> 16][dev_addr_int_rep_id & 0xFFFF][rev_map.target];
-                    rev_map.our_usages.push_back((out_usage_def_t){
-                        .data = out_reports[dev_addr_int_rep_id],
-                        .len = out_report_sizes[dev_addr_int_rep_id],
-                        .size = our_usage2.size,
-                        .bitpos = our_usage2.bitpos,
-                    });
-                }
-            }
-        }
-    }
+    // for (auto& rev_map : reverse_mapping) {
+    //     for (auto& map_source : rev_map.sources) {
+    //         map_source.is_relative = relative_usage_set.count(map_source.input_state) > 0;
+    //         map_source.is_binary = (binary_usage_set.count(map_source.input_state) > 0) ||
+    //                                ((map_source.usage & 0xFFFF0000) == GPIO_USAGE_PAGE);
+    //     }
+    //     auto search = their_out_usages_flat.find(rev_map.target);
+    //     if (search != their_out_usages_flat.end()) {
+    //         rev_map.our_usages.clear();
+    //         for (auto dev_addr_int_rep_id : search->second) {
+    //             uint8_t hub_port = hub_ports[dev_addr_int_rep_id >> 24];
+    //             if ((rev_map.hub_port == 0) || (rev_map.hub_port == hub_port)) {
+    //                 auto const& our_usage2 = their_out_usages[dev_addr_int_rep_id >> 16][dev_addr_int_rep_id & 0xFFFF][rev_map.target];
+    //                 rev_map.our_usages.push_back((out_usage_def_t){
+    //                     .data = out_reports[dev_addr_int_rep_id],
+    //                     .len = out_report_sizes[dev_addr_int_rep_id],
+    //                     .size = our_usage2.size,
+    //                     .bitpos = our_usage2.bitpos,
+    //                 });
+    //             }
+    //         }
+    //     }
+    // }
 
     // Some keyboards have the same usage as both non-array and array inputs.
     // By reading the non-array ones first we get the right result regardless of which they actually use.
