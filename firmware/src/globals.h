@@ -28,7 +28,6 @@ extern volatile bool need_to_persist_config;
 extern volatile bool their_descriptor_updated;
 extern volatile bool suspended;
 extern volatile bool resume_pending;
-extern volatile bool config_updated;
 
 extern uint8_t unmapped_passthrough_layer_mask;
 extern uint32_t partial_scroll_timeout;
@@ -40,7 +39,6 @@ extern uint8_t macro_entry_duration;
 extern uint8_t gpio_output_mode;
 extern bool normalize_gamepad_inputs;
 
-extern std::vector<mapping_config11_t> config_mappings;
 
 extern uint8_t resolution_multiplier;
 

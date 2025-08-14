@@ -21,7 +21,6 @@ volatile bool need_to_persist_config = false;
 volatile bool their_descriptor_updated = false;
 volatile bool suspended = false;
 volatile bool resume_pending = false;
-volatile bool config_updated = false;
 
 uint8_t unmapped_passthrough_layer_mask = 0b11111111;
 uint32_t partial_scroll_timeout = 1000000;
@@ -32,8 +31,6 @@ bool ignore_auth_dev_inputs = false;
 uint8_t macro_entry_duration = 0;  // 0 means 1ms
 uint8_t gpio_output_mode = 0;
 bool normalize_gamepad_inputs = true;
-
-std::vector<mapping_config11_t> config_mappings;
 
 uint8_t resolution_multiplier = 0;
 
