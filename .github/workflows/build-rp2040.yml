@@ -1,8 +1,6 @@
 name: build-rp2040
 on:
-  push:
-    paths:
-      - 'firmware/**'
+  workflow_dispatch:  # Only run manually during development
   workflow_call:
 defaults:
   run:
