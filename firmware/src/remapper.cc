@@ -28,7 +28,6 @@ const uint32_t H_SCROLL_USAGE = 0x000C0238;
 
 const uint8_t NLAYERS = 4;
 const uint32_t LAYERS_USAGE_PAGE = 0xFFF10000;
-const uint32_t MACRO_USAGE_PAGE = 0xFFF20000;
 const uint32_t EXPR_USAGE_PAGE = 0xFFF30000;
 const uint32_t REGISTER_USAGE_PAGE = 0xFFF50000;
 
@@ -42,7 +41,6 @@ const uint8_t resolution_multiplier_masks[] = {
 };
 
 std::vector<reverse_mapping_t> reverse_mapping;
-std::vector<reverse_mapping_t> reverse_mapping_macros;
 std::vector<reverse_mapping_t> reverse_mapping_layers;
 
 std::unordered_map<uint8_t, std::unordered_map<uint32_t, usage_def_t>> our_usages;  // report_id -> usage -> usage_def
@@ -90,12 +88,6 @@ uint8_t layer_state_mask = 1;
 
 std::vector<int32_t*> relative_usages;  // input_state pointers
 
-struct macro_entry_t {
-    uint8_t duration_left;
-    std::vector<uint32_t> items;
-};
-
-std::queue<macro_entry_t> macro_queue;
 
 uint32_t reports_received;
 uint32_t reports_sent;
@@ -387,7 +379,6 @@ void set_mapping_from_config() {
     invalidate_expr_state_ptr_cache();
 
     reverse_mapping.clear();
-    reverse_mapping_macros.clear();
     reverse_mapping_layers.clear();
     used_state_slots = 0;
     usage_state_ptr.clear();
@@ -486,18 +477,6 @@ void set_mapping_from_config() {
         }
     }
 
-    my_mutex_enter(MutexId::MACROS);
-    for (int macro = 0; macro < NMACROS; macro++) {
-        for (auto const& usages : macros[macro]) {
-            for (uint32_t usage : usages) {
-                if ((usage & 0xFFFF0000) == GPIO_USAGE_PAGE) {
-                    uint16_t pin = usage & 0xFFFF;
-                    gpio_out_mask_ |= 1 << pin;
-                }
-            }
-        }
-    }
-    my_mutex_exit(MutexId::MACROS);
 
     sticky_usages.clear();
     tap_hold_usages.clear();
@@ -686,9 +665,7 @@ void set_mapping_from_config() {
                 }
             }
         }
-        if ((target & 0xFFFF0000) == MACRO_USAGE_PAGE) {
-            reverse_mapping_macros.push_back(rev_map);
-        } else if ((target & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
+        if ((target & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
             reverse_mapping_layers.push_back(rev_map);
         } else {
             reverse_mapping.push_back(rev_map);
@@ -1177,25 +1154,6 @@ void process_mapping(bool auto_repeat) {
         *reg_ptr.state_ptr = *reg_ptr.register_ptr;
     }
 
-    // queue triggered macros
-    for (auto const& rev_map : reverse_mapping_macros) {
-        uint16_t macro = (rev_map.target & 0xFFFF) - 1;
-        if (macro >= NMACROS) {
-            continue;
-        }
-        for (auto const& map_source : rev_map.sources) {
-            if ((layer_state_mask & map_source.layer_mask) &&
-                ((!map_source.tap && !map_source.hold && (*(map_source.input_state + PREV_STATE_OFFSET) == 0) && (*map_source.input_state != 0)) ||
-                    (map_source.hold && map_source.tap_hold_state->hold && !map_source.tap_hold_state->prev_hold) ||
-                    (map_source.tap && map_source.tap_hold_state->tap))) {
-                my_mutex_enter(MutexId::MACROS);
-                for (auto const& usages : macros[macro]) {
-                    macro_queue.push((macro_entry_t){ duration_left : macro_entry_duration, items : usages });
-                }
-                my_mutex_exit(MutexId::MACROS);
-            }
-        }
-    }
 
     memcpy(input_state + PREV_STATE_OFFSET, input_state, used_state_slots * sizeof(input_state[0]));
     digipot_state[0] = 128;
@@ -1316,48 +1274,6 @@ void process_mapping(bool auto_repeat) {
         }
     }
 
-    // execute queued macros
-    if (!macro_queue.empty()) {
-        for (uint32_t usage : macro_queue.front().items) {
-            if ((usage & 0xFFFF0000) == GPIO_USAGE_PAGE) {
-                put_bits(gpio_out_state, sizeof(gpio_out_state), (uint16_t) (usage & 0xFFFF), 1, 1);
-            } else if ((usage & 0xFFFF0000) == DPAD_USAGE_PAGE) {
-                put_bits(&dpad_state, sizeof(dpad_state), (uint16_t) (usage & 0xFFFF) - 1, 1, 1);
-            } else {
-                bool handled = false;
-                for (auto const& array_usage : our_array_range_usages) {
-                    if ((usage >= array_usage.usage) && (usage <= array_usage.usage_def.usage_maximum)) {
-                        const uint8_t report_id = array_usage.usage_def.report_id;
-                        for (unsigned int i = 0; i < array_usage.usage_def.count; i++) {
-                            int32_t existing_val = get_bits(reports[report_id], report_sizes[report_id], array_usage.usage_def.bitpos + i * array_usage.usage_def.size, array_usage.usage_def.size);
-                            // theoretically zero could be a valid index, but let's ignore that for now
-                            if (existing_val == 0) {
-                                put_bits(reports[report_id], report_sizes[report_id], array_usage.usage_def.bitpos + i * array_usage.usage_def.size, array_usage.usage_def.size, array_usage.usage_def.logical_minimum + usage - array_usage.usage);
-                                break;
-                            }
-                        }
-                        // we don't do RollOver
-                        handled = true;
-                        break;
-                    }
-                }
-                if (!handled) {
-                    auto search = our_usages_flat.find(usage);
-                    if (search != our_usages_flat.end()) {
-                        const usage_def_t& our_usage = search->second;
-                        put_bits((uint8_t*) reports[our_usage.report_id], report_sizes[our_usage.report_id], our_usage.bitpos, our_usage.size, 1);
-                    }
-                }
-            }
-        }
-        if (macro_queue.front().duration_left > 0) {
-            macro_queue.front().duration_left--;
-        } else {
-            if (or_items == 0) {
-                macro_queue.pop();
-            }
-        }
-    }
 
     if (have_dpad) {
         uint8_t dpad_val = dpad_table[dpad_state];

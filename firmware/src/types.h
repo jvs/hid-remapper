@@ -191,7 +191,6 @@ struct __attribute__((packed)) quirk_t {
 
 enum class MutexId : int8_t {
     THEIR_USAGES,
-    MACROS,
     EXPRESSIONS,
     QUIRKS,
     N

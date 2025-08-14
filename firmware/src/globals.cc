@@ -28,7 +28,6 @@ uint32_t tap_hold_threshold = 200000;
 uint64_t gpio_debounce_time = 5000;
 uint8_t our_descriptor_number = 0;
 bool ignore_auth_dev_inputs = false;
-uint8_t macro_entry_duration = 0;  // 0 means 1ms
 uint8_t gpio_output_mode = 0;
 bool normalize_gamepad_inputs = true;
 
@@ -36,7 +35,6 @@ std::vector<mapping_config11_t> config_mappings;
 
 uint8_t resolution_multiplier = 0;
 
-std::vector<std::vector<uint32_t>> macros[NMACROS];
 
 std::vector<expr_elem_t> expressions[NEXPRESSIONS];
 

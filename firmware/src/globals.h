@@ -35,7 +35,6 @@ extern uint32_t tap_hold_threshold;
 extern uint64_t gpio_debounce_time;
 extern uint8_t our_descriptor_number;
 extern bool ignore_auth_dev_inputs;
-extern uint8_t macro_entry_duration;
 extern uint8_t gpio_output_mode;
 extern bool normalize_gamepad_inputs;
 
@@ -43,9 +42,6 @@ extern std::vector<mapping_config11_t> config_mappings;
 
 extern uint8_t resolution_multiplier;
 
-#define NMACROS_8 8
-#define NMACROS 32
-extern std::vector<std::vector<uint32_t>> macros[NMACROS];
 
 #define NEXPRESSIONS 8
 extern std::vector<expr_elem_t> expressions[NEXPRESSIONS];
