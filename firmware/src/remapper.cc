@@ -219,52 +219,6 @@ void set_mapping_from_config() {
     uint32_t gpio_in_mask_ = 0;
     uint32_t gpio_out_mask_ = 0;
 
-    for (auto const& mapping : config_mappings) {
-        uint8_t layer_mask = mapping.layer_mask;
-        uint8_t source_port = mapping.hub_ports & 0x0F;
-        uint8_t orig_source_port = source_port;
-        if (((mapping.source_usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) ||
-            ((mapping.source_usage & 0xFFFF0000) == GPIO_USAGE_PAGE)) {
-            source_port = 0;
-        }
-        uint8_t target_port = (mapping.hub_ports >> 4) & 0x0F;
-        if ((mapping.target_usage & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
-            uint16_t layer = mapping.target_usage & 0xFFFF;
-            // layer-triggering mappings are forced to BE present on the layer they trigger
-            layer_mask |= (1 << layer) & ((1 << NLAYERS) - 1);
-        }
-
-        if ((mapping.target_usage & 0xFFFF0000) == GPIO_USAGE_PAGE) {
-            uint16_t pin = mapping.target_usage & 0xFFFF;
-            gpio_out_mask_ |= 1 << pin;
-        }
-
-        if ((mapping.source_usage & 0xFFFF0000) == GPIO_USAGE_PAGE) {
-            uint16_t pin = mapping.source_usage & 0xFFFF;
-            gpio_in_mask_ |= 1 << pin;
-        }
-
-        if (assign_state_slot(mapping.source_usage, source_port, false)) {
-            reverse_mapping_map[((uint64_t) target_port << 32) | mapping.target_usage].push_back((map_source_t){
-                .usage = mapping.source_usage,
-                .scaling = mapping.scaling,
-                .tap = (mapping.flags & MAPPING_FLAG_TAP) != 0,
-                .hold = (mapping.flags & MAPPING_FLAG_HOLD) != 0,
-                .orig_source_port = orig_source_port,
-                .layer_mask = layer_mask,
-                .input_state = get_state_ptr(mapping.source_usage, source_port),
-            });
-
-            if ((mapping.source_usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                register_ptrs.push_back((register_ptrs_t){
-                    .register_ptr = &registers[(mapping.source_usage & 0xFFFF) - 1],
-                    .state_ptr = get_state_ptr(mapping.source_usage, source_port),
-                });
-            }
-        }
-        mapped_on_layers[mapping.source_usage] |= layer_mask;  // usage mapped on any hub_port is considered to be mapped
-    }
-
 
     if (unmapped_passthrough_layer_mask) {
         for (auto const& [usage, usage_def] : our_usages_flat) {

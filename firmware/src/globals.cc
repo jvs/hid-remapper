@@ -29,8 +29,6 @@ uint8_t our_descriptor_number = 0;
 bool ignore_auth_dev_inputs = false;
 uint8_t gpio_output_mode = 0;
 
-std::vector<mapping_config11_t> config_mappings;
-
 uint8_t resolution_multiplier = 0;
 
 
