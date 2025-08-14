@@ -193,6 +193,92 @@ struct register_ptrs_t {
     int32_t* state_ptr;
 };
 
+struct __attribute__((packed)) set_feature_t {
+    uint8_t version;
+    ConfigCommand command;
+    uint8_t data[26];
+    uint32_t crc32;
+};
+
+struct __attribute__((packed)) get_feature_t {
+    uint8_t data[28];
+    uint32_t crc32;
+};
+
+struct __attribute__((packed)) mapping_config10_t {
+    uint32_t target_usage;
+    uint32_t source_usage;
+    int32_t scaling;  // * 1000
+    uint8_t layer_mask;
+    uint8_t flags;
+};
+
+struct __attribute__((packed)) mapping_config11_t {
+    uint32_t target_usage;
+    uint32_t source_usage;
+    int32_t scaling;  // * 1000
+    uint8_t layer_mask;
+    uint8_t flags;
+    uint8_t hub_ports = 0;
+};
+
+struct __attribute__((packed)) config_version_t {
+    uint8_t version;
+};
+
+struct __attribute__((packed)) persist_config_v4_t {
+    uint8_t version;
+    uint8_t flags;
+    uint32_t partial_scroll_timeout;
+    uint32_t mapping_count;
+    uint8_t interval_override;
+};
+
+struct __attribute__((packed)) persist_config_v5_t {
+    uint8_t version;
+    uint8_t flags;
+    uint32_t partial_scroll_timeout;
+    uint32_t mapping_count;
+    uint8_t interval_override;
+    uint32_t tap_hold_threshold;
+};
+
+typedef persist_config_v5_t persist_config_v6_t;
+
+struct __attribute__((packed)) persist_config_v7_t {
+    uint8_t version;
+    uint8_t flags;
+    uint32_t partial_scroll_timeout;
+    uint32_t mapping_count;
+    uint8_t interval_override;
+    uint32_t tap_hold_threshold;
+    uint8_t gpio_debounce_time_ms;
+};
+
+struct __attribute__((packed)) persist_config_v9_t {
+    uint8_t version;
+    uint8_t flags;
+    uint32_t partial_scroll_timeout;
+    uint32_t mapping_count;
+    uint8_t interval_override;
+    uint32_t tap_hold_threshold;
+    uint8_t gpio_debounce_time_ms;
+    uint8_t our_descriptor_number;
+};
+
+struct __attribute__((packed)) persist_config_v10_t {
+    uint8_t version;
+    uint8_t flags;
+    uint32_t partial_scroll_timeout;
+    uint32_t mapping_count;
+    uint8_t interval_override;
+    uint32_t tap_hold_threshold;
+    uint8_t gpio_debounce_time_ms;
+    uint8_t our_descriptor_number;
+    uint8_t macro_entry_duration;
+};
+
+typedef persist_config_v10_t persist_config_v11_t;
 
 #define QUIRK_FLAG_RELATIVE_MASK 0b10000000
 #define QUIRK_FLAG_SIGNED_MASK 0b01000000

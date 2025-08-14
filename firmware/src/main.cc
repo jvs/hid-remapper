@@ -221,6 +221,7 @@ int main() {
     load_config(FLASH_CONFIG_IN_MEMORY);
     our_descriptor = &our_descriptors[our_descriptor_number];
     parse_our_descriptor();
+    set_mapping_from_config();
     board_init();
     extra_init();
     tusb_init();
@@ -259,10 +260,15 @@ int main() {
         if (boot_protocol_updated) {
             parse_our_descriptor();
             boot_protocol_updated = false;
+            config_updated = true;
         }
         if (resume_pending) {
             resume_pending = false;
             suspended = false;
+        }
+        if (config_updated) {
+            set_mapping_from_config();
+            config_updated = false;
         }
         if (set_gpio_dir_pending && !suspended) {
             set_gpio_dir();
