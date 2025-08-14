@@ -6,9 +6,6 @@
 #include <bsp/board_api.h>
 #include <tusb.h>
 
-#ifdef ADC_ENABLED
-#include <hardware/adc.h>
-#endif
 #include <hardware/flash.h>
 #include <hardware/gpio.h>
 #include <pico/bootrom.h>
@@ -22,8 +19,6 @@
 #include "crc.h"
 #include "descriptor_parser.h"
 #include "globals.h"
-#include "i2c.h"
-#include "mcp4651.h"
 #include "our_descriptor.h"
 #include "platform.h"
 #include "remapper.h"
@@ -53,9 +48,6 @@ uint32_t prev_gpio_state = 0;
 uint64_t last_gpio_change[32] = { 0 };
 bool set_gpio_dir_pending = false;
 
-#ifdef ADC_ENABLED
-uint16_t prev_adc_state[NADCS] = { 0 };
-#endif
 
 void print_stats_maybe() {
     uint64_t now = time_us_64();
@@ -100,21 +92,6 @@ void set_gpio_dir() {
     }
 }
 
-#ifdef ADC_ENABLED
-void adc_pins_init() {
-    adc_init();
-    for (int n = 26; n < 26 + NADCS; n++) {
-        adc_gpio_init(n);
-    }
-
-#ifdef PICO_SMPS_MODE_PIN
-    // (This only does anything on a Pico, but won't hurt on custom board v8.)
-    gpio_init(PICO_SMPS_MODE_PIN);
-    gpio_set_dir(PICO_SMPS_MODE_PIN, GPIO_OUT);
-    gpio_put(PICO_SMPS_MODE_PIN, true);
-#endif
-}
-#endif
 
 bool read_gpio(uint64_t now) {
     uint32_t gpio_state = gpio_get_all() & gpio_in_mask;
