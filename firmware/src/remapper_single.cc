@@ -103,18 +103,6 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance, uint8_t cons
     tuh_hid_receive_report(dev_addr, instance);
 }
 
-void tuh_midi_rx_cb(uint8_t dev_addr, uint32_t num_packets) {
-    uint8_t hub_addr;
-    uint8_t hub_port;
-    tuh_get_hub_addr_port(dev_addr, &hub_addr, &hub_port);
-
-    uint8_t buf[4];
-    while (tuh_midi_packet_read(dev_addr, buf)) {
-        handle_received_midi(hub_port, buf);
-    }
-    reports_received = true;
-}
-
 void queue_out_report(uint16_t interface, uint8_t report_id, const uint8_t* buffer, uint8_t len) {
     do_queue_out_report(buffer, len, report_id, interface >> 8, interface & 0xFF, OutType::OUTPUT);
 }
