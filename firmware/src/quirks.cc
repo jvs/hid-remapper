@@ -835,10 +835,5 @@ void apply_quirks(uint16_t vendor_id, uint16_t product_id, std::unordered_map<ui
             product_id == PRODUCT_ID_GOOGLE_STADIA_CONTROLLER) {
             gamepad_normalize(usage_map[3], stadia_mapping, sizeof(stadia_mapping) / sizeof(stadia_mapping[0]));
         }
-        if (vendor_id == VENDOR_ID_MICROSOFT &&
-            product_id == PRODUCT_ID_MICROSOFT_XBOX_WIRELESS_CONTROLLER) {
-            gamepad_normalize(usage_map[32], xbox_mapping32, sizeof(xbox_mapping32) / sizeof(xbox_mapping32[0]));
-            gamepad_normalize(usage_map[7], xbox_mapping7, sizeof(xbox_mapping7) / sizeof(xbox_mapping7[0]));
-        }
     }
 }
