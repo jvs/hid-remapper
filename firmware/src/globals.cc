@@ -36,7 +36,6 @@ std::vector<mapping_config11_t> config_mappings;
 uint8_t resolution_multiplier = 0;
 
 
-std::vector<expr_elem_t> expressions[NEXPRESSIONS];
 
 bool monitor_enabled = false;
 

@@ -28,7 +28,6 @@ const uint32_t H_SCROLL_USAGE = 0x000C0238;
 
 const uint8_t NLAYERS = 4;
 const uint32_t LAYERS_USAGE_PAGE = 0xFFF10000;
-const uint32_t EXPR_USAGE_PAGE = 0xFFF30000;
 const uint32_t REGISTER_USAGE_PAGE = 0xFFF50000;
 
 const uint32_t ROLLOVER_USAGE = 0x00070001;
@@ -93,7 +92,6 @@ uint32_t reports_received;
 uint32_t reports_sent;
 uint32_t processing_time;
 
-bool expression_valid[NEXPRESSIONS] = { false };
 
 std::unordered_map<uint32_t, int32_t> monitor_input_state;
 uint8_t monitor_usages_queued = 0;
@@ -180,144 +178,8 @@ bool needs_to_be_sent(uint8_t report_id) {
     return false;
 }
 
-bool is_expr_valid(uint8_t expr) {
-    int16_t on_stack = 0;
-    for (auto const& elem : expressions[expr]) {
-        // should we have a data structure with each op's input/output instead?
-        switch (elem.op) {
-            case Op::DEBUG:
-            case Op::EOL:
-                break;
-            case Op::PUSH:
-            case Op::PUSH_USAGE:
-            case Op::AUTO_REPEAT:
-            case Op::TIME:
-            case Op::SCALING:
-            case Op::LAYER_STATE:
-            case Op::TIME_SEC:
-            case Op::PLUGGED_IN:
-                if (on_stack >= STACK_SIZE) {
-                    return false;
-                }
-                on_stack++;
-                break;
-            case Op::NOT:
-            case Op::INPUT_STATE:
-            case Op::INPUT_STATE_BINARY:
-            case Op::ABS:
-            case Op::SIN:
-            case Op::COS:
-            case Op::RELU:
-            case Op::STICKY_STATE:
-            case Op::TAP_STATE:
-            case Op::HOLD_STATE:
-            case Op::BITWISE_NOT:
-            case Op::PREV_INPUT_STATE:
-            case Op::PREV_INPUT_STATE_BINARY:
-            case Op::RECALL:
-            case Op::SQRT:
-            case Op::ROUND:
-            case Op::INPUT_STATE_FP32:
-            case Op::PREV_INPUT_STATE_FP32:
-            case Op::INPUT_STATE_SCALED:
-            case Op::PREV_INPUT_STATE_SCALED:
-            case Op::SIGN:
-                if (on_stack < 1) {
-                    return false;
-                }
-                break;
-            case Op::DUP:
-                if ((on_stack < 1) || (on_stack >= STACK_SIZE)) {
-                    return false;
-                }
-                on_stack++;
-                break;
-            case Op::ADD:
-            case Op::MUL:
-            case Op::EQ:
-            case Op::GT:
-            case Op::MOD:
-            case Op::BITWISE_OR:
-            case Op::BITWISE_AND:
-            case Op::ATAN2:
-            case Op::MIN:
-            case Op::MAX:
-            case Op::DIV:
-            case Op::SUB:
-            case Op::LT:
-                if (on_stack < 2) {
-                    return false;
-                }
-                on_stack--;
-                break;
-            case Op::CLAMP:
-            case Op::IFTE:
-                if (on_stack < 3) {
-                    return false;
-                }
-                on_stack -= 2;
-                break;
-            case Op::STORE:
-            case Op::MONITOR:
-            case Op::PRINT_IF:
-                if (on_stack < 2) {
-                    return false;
-                }
-                on_stack -= 2;
-                break;
-            case Op::PORT:
-                if (on_stack < 1) {
-                    return false;
-                }
-                on_stack--;
-                break;
-            case Op::DPAD:
-                if (on_stack < 4) {
-                    return false;
-                }
-                on_stack -= 3;
-                break;
-            case Op::SWAP:
-                if (on_stack < 2) {
-                    return false;
-                }
-                break;
-            case Op::DEADZONE:
-                if (on_stack < 3) {
-                    return false;
-                }
-                on_stack -= 1;
-                break;
-            case Op::DEADZONE2:
-                if (on_stack < 4) {
-                    return false;
-                }
-                on_stack -= 2;
-                break;
-            default:
-                printf("unknown op in is_expr_valid()\n");
-                return false;
-        }
-    }
-    return true;
-}
 
-void validate_expressions() {
-    for (uint8_t i = 0; i < NEXPRESSIONS; i++) {
-        expression_valid[i] = is_expr_valid(i);
-        if (!expression_valid[i]) {
-            printf("Expression %d invalid.\n", i + 1);
-        }
-    }
-}
 
-void invalidate_expr_state_ptr_cache() {
-    for (uint8_t i = 0; i < NEXPRESSIONS; i++) {
-        for (auto& elem : expressions[i]) {
-            elem.state_ptr = NULL;
-        }
-    }
-}
 
 bool assign_state_slot(uint32_t usage, uint8_t hub_port, bool raw) {
     uint64_t key = (raw ? ((uint64_t) 1 << 40) : 0) | ((uint64_t) hub_port << 32) | usage;
@@ -375,8 +237,6 @@ void set_mapping_from_config() {
     std::unordered_set<uint64_t> tap_hold_usage_set;
     std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
 
-    validate_expressions();
-    invalidate_expr_state_ptr_cache();
 
     reverse_mapping.clear();
     reverse_mapping_layers.clear();
@@ -393,8 +253,7 @@ void set_mapping_from_config() {
         uint8_t layer_mask = mapping.layer_mask;
         uint8_t source_port = mapping.hub_ports & 0x0F;
         uint8_t orig_source_port = source_port;
-        if (((mapping.source_usage & 0xFFFF0000) == EXPR_USAGE_PAGE) ||
-            ((mapping.source_usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) ||
+        if (((mapping.source_usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) ||
             ((mapping.source_usage & 0xFFFF0000) == GPIO_USAGE_PAGE)) {
             source_port = 0;
         }
@@ -441,21 +300,6 @@ void set_mapping_from_config() {
                     .register_ptr = &registers[(mapping.source_usage & 0xFFFF) - 1],
                     .state_ptr = get_state_ptr(mapping.source_usage, source_port),
                 });
-            }
-        }
-        // if a usage appears in an expression, consider it mapped
-        if ((mapping.source_usage & 0xFFFF0000) == EXPR_USAGE_PAGE) {
-            uint8_t expr = (mapping.source_usage & 0xFFFF) - 1;
-            for (auto const& elem : expressions[expr]) {
-                if (elem.op == Op::PUSH_USAGE) {
-                    mapped_on_layers[elem.val] |= layer_mask;
-
-                    // if a GPIO pin usage appears in an expression, it's an "in" pin
-                    if ((elem.val & 0xFFFF0000) == GPIO_USAGE_PAGE) {
-                        uint16_t pin = elem.val & 0xFFFF;
-                        gpio_in_mask_ |= 1 << pin;
-                    }
-                }
             }
         }
         mapped_on_layers[mapping.source_usage] |= layer_mask;  // usage mapped on any hub_port is considered to be mapped
@@ -718,347 +562,6 @@ static inline uint8_t dpad(bool left, bool right, bool up, bool down) {
     return dpad_table[index];
 }
 
-int32_t eval_expr(uint8_t expr, uint64_t now, bool auto_repeat) {
-    static int32_t stack[STACK_SIZE];
-    bool debug = false;
-    int16_t ptr = -1;
-    if (expr >= NEXPRESSIONS) {
-        return 0;
-    }
-    if (!expression_valid[expr]) {
-        return 0;
-    }
-    for (auto& elem : expressions[expr]) {
-        switch (elem.op) {
-            case Op::PUSH:
-            case Op::PUSH_USAGE:
-                stack[++ptr] = elem.val;
-                break;
-            case Op::INPUT_STATE:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? *elem.state_ptr * 1000 : 0;
-                break;
-            case Op::ADD:
-                stack[ptr - 1] = stack[ptr - 1] + stack[ptr];
-                ptr--;
-                break;
-            case Op::MUL:
-                stack[ptr - 1] = (int64_t) stack[ptr - 1] * stack[ptr] / 1000;
-                ptr--;
-                break;
-            case Op::EQ:
-                stack[ptr - 1] = (stack[ptr - 1] == stack[ptr]) * 1000;
-                ptr--;
-                break;
-            case Op::TIME:
-                stack[++ptr] = (now * 1000) & 0x7fffffff;
-                break;
-            case Op::MOD:
-                stack[ptr - 1] = stack[ptr - 1] % stack[ptr];
-                ptr--;
-                break;
-            case Op::GT:
-                stack[ptr - 1] = (stack[ptr - 1] > stack[ptr]) * 1000;
-                ptr--;
-                break;
-            case Op::NOT:
-                stack[ptr] = (!stack[ptr]) * 1000;
-                break;
-            case Op::INPUT_STATE_BINARY:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? !!(*elem.state_ptr) * 1000 : 0;
-                break;
-            case Op::ABS:
-                stack[ptr] = labs(stack[ptr]);
-                break;
-            case Op::DUP:
-                stack[ptr + 1] = stack[ptr];
-                ptr++;
-                break;
-            case Op::SIN:
-                stack[ptr] = sinf((float) stack[ptr] * 3.14159265f / 180000.0f) * 1000;
-                break;
-            case Op::COS:
-                stack[ptr] = cosf((float) stack[ptr] * 3.14159265f / 180000.0f) * 1000;
-                break;
-            case Op::DEBUG:
-                debug = true;
-                printf("\nexpr %d\n", expr + 1);
-                break;
-            case Op::AUTO_REPEAT:
-                stack[++ptr] = auto_repeat ? 1000 : 0;
-                break;
-            case Op::RELU:
-                if (stack[ptr] < 0) {
-                    stack[ptr] = 0;
-                }
-                break;
-            case Op::SCALING:
-                stack[++ptr] = 1000;
-                break;
-            case Op::CLAMP:
-                if (stack[ptr - 2] < stack[ptr - 1]) {
-                    stack[ptr - 2] = stack[ptr - 1];
-                }
-                if (stack[ptr - 2] > stack[ptr]) {
-                    stack[ptr - 2] = stack[ptr];
-                }
-                ptr -= 2;
-                break;
-            case Op::LAYER_STATE:
-                stack[++ptr] = layer_state_mask;
-                break;
-            case Op::STICKY_STATE:
-                if (elem.sticky_state_ptr == NULL) {
-                    elem.sticky_state_ptr = get_sticky_state_ptr(stack[ptr], port_register, true);
-                }
-                if (elem.sticky_state_ptr != NULL) {
-                    stack[ptr] = *elem.sticky_state_ptr;
-                }
-                break;
-            case Op::TAP_STATE:
-                if (elem.tap_hold_state_ptr == NULL) {
-                    elem.tap_hold_state_ptr = get_tap_hold_state_ptr(stack[ptr], port_register, true);
-                }
-                if (elem.tap_hold_state_ptr != NULL) {
-                    stack[ptr] = elem.tap_hold_state_ptr->tap * 1000;
-                }
-                break;
-            case Op::HOLD_STATE:
-                if (elem.tap_hold_state_ptr == NULL) {
-                    elem.tap_hold_state_ptr = get_tap_hold_state_ptr(stack[ptr], port_register, true);
-                }
-                if (elem.tap_hold_state_ptr != NULL) {
-                    stack[ptr] = elem.tap_hold_state_ptr->hold * 1000;
-                }
-                break;
-            case Op::BITWISE_OR:
-                stack[ptr - 1] = stack[ptr - 1] | stack[ptr];
-                ptr--;
-                break;
-            case Op::BITWISE_AND:
-                stack[ptr - 1] = stack[ptr - 1] & stack[ptr];
-                ptr--;
-                break;
-            case Op::BITWISE_NOT:
-                stack[ptr] = ~stack[ptr];
-                break;
-            case Op::PREV_INPUT_STATE:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? *(elem.state_ptr + PREV_STATE_OFFSET) * 1000 : 0;
-                break;
-            case Op::PREV_INPUT_STATE_BINARY:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? !!(*(elem.state_ptr + PREV_STATE_OFFSET)) * 1000 : 0;
-                break;
-            case Op::STORE: {
-                int32_t reg_number = stack[ptr] / 1000 - 1;
-                if ((reg_number >= 0) && (reg_number < NREGISTERS)) {
-                    registers[reg_number] = stack[ptr - 1];
-                }
-                ptr -= 2;
-                break;
-            }
-            case Op::RECALL: {
-                int32_t reg_number = stack[ptr] / 1000 - 1;
-                if ((reg_number >= 0) && (reg_number < NREGISTERS)) {
-                    stack[ptr] = registers[reg_number];
-                }
-                break;
-            }
-            case Op::SQRT:
-                if (stack[ptr] >= 0) {
-                    stack[ptr] = sqrt(stack[ptr]) * 31.622776601683793;
-                }
-                break;
-            case Op::ATAN2:
-                stack[ptr - 1] = atan2(stack[ptr - 1], stack[ptr]) * 57295.779513;  // result in degrees
-                ptr--;
-                break;
-            case Op::ROUND:
-                stack[ptr] += 500;
-                stack[ptr] -= ((stack[ptr] % 1000) + 1000) % 1000;
-                break;
-            case Op::PORT:
-                port_register = stack[ptr] / 1000;
-                if (port_register > NPORTS) {
-                    port_register = 0;
-                }
-                ptr--;
-                break;
-            case Op::DPAD:
-                stack[ptr - 3] = 1000 * dpad(stack[ptr - 3], stack[ptr - 2], stack[ptr - 1], stack[ptr]);
-                ptr -= 3;
-                break;
-            case Op::EOL:
-                break;
-            case Op::INPUT_STATE_FP32:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? 1000.0f * *((float*) elem.state_ptr) : 0;
-                break;
-            case Op::PREV_INPUT_STATE_FP32:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? 1000.0f * *((float*) elem.state_ptr + PREV_STATE_OFFSET) : 0;
-                break;
-            case Op::MIN:
-                stack[ptr - 1] = stack[ptr - 1] < stack[ptr] ? stack[ptr - 1] : stack[ptr];
-                ptr--;
-                break;
-            case Op::MAX:
-                stack[ptr - 1] = stack[ptr - 1] > stack[ptr] ? stack[ptr - 1] : stack[ptr];
-                ptr--;
-                break;
-            case Op::IFTE:
-                stack[ptr - 2] = (stack[ptr - 2] != 0) ? stack[ptr - 1] : stack[ptr];
-                ptr -= 2;
-                break;
-            case Op::DIV:
-                if (stack[ptr] != 0) {
-                    stack[ptr - 1] = (int64_t) 1000 * stack[ptr - 1] / stack[ptr];
-                } else {
-                    stack[ptr - 1] = 0;
-                }
-                ptr--;
-                break;
-            case Op::SWAP: {
-                int32_t tmp = stack[ptr - 1];
-                stack[ptr - 1] = stack[ptr];
-                stack[ptr] = tmp;
-                break;
-            }
-            case Op::MONITOR:
-                // The value will show up *1000, but that's okay, we don't
-                // want to lose the fractional part.
-                if (monitor_enabled) {
-                    if (stack[ptr - 1] != monitor_input_state[stack[ptr]]) {
-                        monitor_usage(stack[ptr], stack[ptr - 1], 0);
-                        monitor_input_state[stack[ptr]] = stack[ptr - 1];
-                    }
-                }
-                ptr -= 2;
-                break;
-            case Op::SIGN:
-                stack[ptr] = (stack[ptr] > 0) ? 1000 : ((stack[ptr]) < 0 ? -1000 : 0);
-                break;
-            case Op::SUB:
-                stack[ptr - 1] = stack[ptr - 1] - stack[ptr];
-                ptr--;
-                break;
-            case Op::PRINT_IF:
-                if (stack[ptr] != 0) {
-                    printf("%ld\n", stack[ptr - 1]);
-                }
-                ptr -= 2;
-                break;
-            case Op::TIME_SEC:
-                stack[++ptr] = now & 0x7fffffff;
-                break;
-            case Op::LT:
-                stack[ptr - 1] = (stack[ptr - 1] < stack[ptr]) * 1000;
-                ptr--;
-                break;
-            case Op::PLUGGED_IN:
-                stack[++ptr] = 1000 * ((port_register == 0) || (active_ports_mask & (1 << port_register)));
-                break;
-            case Op::INPUT_STATE_SCALED:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? *elem.state_ptr * 1000 : 0;
-                break;
-            case Op::PREV_INPUT_STATE_SCALED:
-                if (elem.state_ptr == NULL) {
-                    elem.state_ptr = get_state_ptr(stack[ptr], port_register, true);
-                }
-                stack[ptr] = (elem.state_ptr != NULL) ? *(elem.state_ptr + PREV_STATE_OFFSET) * 1000 : 0;
-                break;
-            case Op::DEADZONE: {
-                int32_t x = stack[ptr - 2] / 1000 - 128;
-                int32_t y = stack[ptr - 1] / 1000 - 128;
-                int32_t radius = sqrt((x * x) + (y * y));
-                int32_t deadzone_radius = stack[ptr] / 1000;
-                if ((radius < deadzone_radius) || (radius * (128 - deadzone_radius) <= 0)) {
-                    stack[ptr - 2] = 128000;
-                    stack[ptr - 1] = 128000;
-                } else {
-                    stack[ptr - 2] = 128 + x * 128 * (radius - deadzone_radius) / (radius * (128 - deadzone_radius));
-                    if (stack[ptr - 2] < 0) {
-                        stack[ptr - 2] = 0;
-                    }
-                    if (stack[ptr - 2] > 255) {
-                        stack[ptr - 2] = 255;
-                    }
-                    stack[ptr - 2] *= 1000;
-                    stack[ptr - 1] = 128 + y * 128 * (radius - deadzone_radius) / (radius * (128 - deadzone_radius));
-                    if (stack[ptr - 1] < 0) {
-                        stack[ptr - 1] = 0;
-                    }
-                    if (stack[ptr - 1] > 255) {
-                        stack[ptr - 1] = 255;
-                    }
-                    stack[ptr - 1] *= 1000;
-                }
-                ptr--;
-                break;
-            }
-            case Op::DEADZONE2: {
-                int32_t x = stack[ptr - 3] / 1000 - 128;
-                int32_t y = stack[ptr - 2] / 1000 - 128;
-                int32_t radius = sqrt((x * x) + (y * y));
-                int32_t inner_deadzone_radius = stack[ptr - 1] / 1000;
-                int32_t outer_deadzone = stack[ptr] / 1000;
-                if ((radius < inner_deadzone_radius) || (radius * (128 - inner_deadzone_radius - outer_deadzone) <= 0)) {
-                    stack[ptr - 3] = 128000;
-                    stack[ptr - 2] = 128000;
-                } else {
-                    stack[ptr - 3] = 128 + x * 128 * (radius - inner_deadzone_radius) / (radius * (128 - inner_deadzone_radius - outer_deadzone));
-                    if (stack[ptr - 3] < 0) {
-                        stack[ptr - 3] = 0;
-                    }
-                    if (stack[ptr - 3] > 255) {
-                        stack[ptr - 3] = 255;
-                    }
-                    stack[ptr - 3] *= 1000;
-                    stack[ptr - 2] = 128 + y * 128 * (radius - inner_deadzone_radius) / (radius * (128 - inner_deadzone_radius - outer_deadzone));
-                    if (stack[ptr - 2] < 0) {
-                        stack[ptr - 2] = 0;
-                    }
-                    if (stack[ptr - 2] > 255) {
-                        stack[ptr - 2] = 255;
-                    }
-                    stack[ptr - 2] *= 1000;
-                }
-                ptr -= 2;
-                break;
-            }
-            default:
-                printf("unknown op!\n");
-                return 0;
-        }
-        if (debug) {
-            for (int i = 0; i <= ptr; i++) {
-                printf("0x%08lx ", stack[i]);
-            }
-            printf("\n");
-        }
-    }
-    if (ptr >= 0) {
-        return stack[ptr];
-    }
-    return 0;
-}
 
 void process_mapping(bool auto_repeat) {
     if (suspended) {
@@ -1139,16 +642,6 @@ void process_mapping(bool auto_repeat) {
 
     layer_state_mask = new_layer_state_mask;
 
-    // evaluate all expressions
-    // XXX should we do this before or after tap-hold/sticky/layer logic?
-    port_register = 0;
-    for (uint8_t i = 0; i < NEXPRESSIONS; i++) {
-        int32_t result = eval_expr(i, frame_counter, auto_repeat);
-        int32_t* state_ptr = get_state_ptr(EXPR_USAGE_PAGE | (i + 1), 0);
-        if (state_ptr != NULL) {
-            *state_ptr = result;
-        }
-    }
 
     for (auto const& reg_ptr : register_ptrs) {
         *reg_ptr.state_ptr = *reg_ptr.register_ptr;
@@ -1184,8 +677,7 @@ void process_mapping(bool auto_repeat) {
                                 value = !!value;
                             }
                             value *= map_source.scaling;
-                            if (((map_source.usage & 0xFFFF0000) == EXPR_USAGE_PAGE) ||
-                                ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE)) {
+                            if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
                                 value /= 1000;
                             }
                         }
@@ -1229,8 +721,7 @@ void process_mapping(bool auto_repeat) {
                                     }
                                     if ((candidate != 0) || !map_source.is_binary) {
                                         candidate = (int64_t) candidate * map_source.scaling / 1000;
-                                        if (((map_source.usage & 0xFFFF0000) == EXPR_USAGE_PAGE) ||
-                                            ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE)) {
+                                        if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
                                             candidate /= 1000;
                                         }
                                         if (candidate != rev_map.default_value) {

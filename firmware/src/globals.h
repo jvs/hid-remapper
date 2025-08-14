@@ -43,8 +43,6 @@ extern std::vector<mapping_config11_t> config_mappings;
 extern uint8_t resolution_multiplier;
 
 
-#define NEXPRESSIONS 8
-extern std::vector<expr_elem_t> expressions[NEXPRESSIONS];
 
 extern bool monitor_enabled;
 

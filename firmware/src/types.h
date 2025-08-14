@@ -91,15 +91,6 @@ struct tap_hold_state_t {
     bool prev_hold : 1;
 };
 
-struct expr_elem_t {
-    Op op;
-    uint32_t val = 0;
-    union {
-        int32_t* state_ptr = NULL;
-        uint8_t* sticky_state_ptr;
-        tap_hold_state_t* tap_hold_state_ptr;
-    };
-};
 
 struct map_source_t {
     uint32_t usage;
@@ -191,7 +182,6 @@ struct __attribute__((packed)) quirk_t {
 
 enum class MutexId : int8_t {
     THEIR_USAGES,
-    EXPRESSIONS,
     QUIRKS,
     N
 };
