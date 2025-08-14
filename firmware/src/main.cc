@@ -159,17 +159,6 @@ bool read_adc() {
 }
 #endif
 
-void do_persist_config(uint8_t* buffer) {
-#if !PICO_COPY_TO_RAM
-    uint32_t ints = save_and_disable_interrupts();
-#endif
-    flash_range_erase(CONFIG_OFFSET_IN_FLASH, PERSISTED_CONFIG_SIZE);
-    flash_range_program(CONFIG_OFFSET_IN_FLASH, buffer, PERSISTED_CONFIG_SIZE);
-#if !PICO_COPY_TO_RAM
-    restore_interrupts(ints);
-#endif
-}
-
 void reset_to_bootloader() {
     reset_usb_boot(0, 0);
 }
@@ -218,7 +207,6 @@ int main() {
     adc_pins_init();
 #endif
     tick_init();
-    load_config(FLASH_CONFIG_IN_MEMORY);
     our_descriptor = &our_descriptors[our_descriptor_number];
     parse_our_descriptor();
     board_init();
@@ -278,11 +266,6 @@ int main() {
             our_descriptor->main_loop_task();
         }
         send_out_report();
-        if (need_to_persist_config) {
-            persist_config_return_code = persist_config();
-            need_to_persist_config = false;
-        }
-
         print_stats_maybe();
 
         activity_led_off_maybe();

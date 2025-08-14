@@ -24,7 +24,6 @@ extern uint32_t interface_index_in_use;                        // bit mask
 extern std::vector<usage_rle_t> our_usages_rle;
 extern std::vector<usage_rle_t> their_usages_rle;
 
-extern volatile bool need_to_persist_config;
 extern volatile bool their_descriptor_updated;
 extern volatile bool suspended;
 extern volatile bool resume_pending;
@@ -64,7 +63,5 @@ extern std::vector<quirk_t> quirks;
 
 extern bool boot_protocol_keyboard;
 extern bool boot_protocol_updated;
-
-extern volatile PersistConfigReturnCode persist_config_return_code;
 
 #endif
