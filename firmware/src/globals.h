@@ -29,7 +29,6 @@ extern volatile bool suspended;
 extern volatile bool resume_pending;
 extern volatile bool config_updated;
 
-extern uint8_t unmapped_passthrough_layer_mask;
 extern uint32_t partial_scroll_timeout;
 extern uint64_t gpio_debounce_time;
 extern uint8_t our_descriptor_number;

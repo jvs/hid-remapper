@@ -35,7 +35,6 @@ struct map_source_t {
     bool is_relative = false;
     bool is_binary = false;
     uint8_t orig_source_port = 0;
-    uint8_t layer_mask = 1;
     int32_t* input_state;
     int32_t accumulated_scroll;
     uint64_t last_scroll_timestamp;  // XXX we can make this 32 or less bits

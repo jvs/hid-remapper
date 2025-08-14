@@ -25,7 +25,6 @@ const uint8_t H_RESOLUTION_BITMASK = (1 << 2);
 const uint32_t V_SCROLL_USAGE = 0x00010038;
 const uint32_t H_SCROLL_USAGE = 0x000C0238;
 
-const uint8_t NLAYERS = 4;
 const uint32_t LAYERS_USAGE_PAGE = 0xFFF10000;
 const uint32_t REGISTER_USAGE_PAGE = 0xFFF50000;
 
@@ -39,7 +38,6 @@ const uint8_t resolution_multiplier_masks[] = {
 };
 
 std::vector<reverse_mapping_t> reverse_mapping;
-std::vector<reverse_mapping_t> reverse_mapping_layers;
 
 std::unordered_map<uint8_t, std::unordered_map<uint32_t, usage_def_t>> our_usages;  // report_id -> usage -> usage_def
 std::unordered_map<uint32_t, usage_def_t> our_usages_flat;
@@ -74,7 +72,6 @@ std::unordered_map<uint64_t, int32_t*> usage_state_ptr;  // usage -> input_state
 uint32_t used_state_slots = 0;
 
 std::unordered_map<uint32_t, int32_t> accumulated;  // usage -> relative movement, * 1000
-uint8_t layer_state_mask = 1;
 
 std::vector<int32_t*> relative_usages;  // input_state pointers
 
@@ -203,58 +200,42 @@ inline int32_t* get_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_a
 
 void set_mapping_from_config() {
     std::unordered_map<uint64_t, std::vector<map_source_t>> reverse_mapping_map;  // hub_port+target -> sources list
-    // std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
 
 
     reverse_mapping.clear();
-    reverse_mapping_layers.clear();
     used_state_slots = 0;
     usage_state_ptr.clear();
     register_ptrs.clear();
     memset(input_state, 0, sizeof(input_state));
 
 
-    if (unmapped_passthrough_layer_mask) {
-        for (auto const& [usage, usage_def] : our_usages_flat) {
-            // uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
-            // if (unmapped_layers) {
-                if (assign_state_slot(usage, 0, false)) {
-                    reverse_mapping_map[usage].push_back((map_source_t){
-                        .usage = usage,
-                        .layer_mask = unmapped_layers,
-                        .input_state = get_state_ptr(usage, 0),
-                    });
-                }
-            // }
+    for (auto const& [usage, usage_def] : our_usages_flat) {
+        if (assign_state_slot(usage, 0, false)) {
+            reverse_mapping_map[usage].push_back((map_source_t){
+                .usage = usage,
+                .input_state = get_state_ptr(usage, 0),
+            });
         }
+    }
 
-        for (auto const& array_usage : our_array_range_usages) {
-            for (uint32_t usage = array_usage.usage; usage <= array_usage.usage_def.usage_maximum; usage++) {
-                // uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
-                // if (unmapped_layers) {
-                    if (assign_state_slot(usage, 0, false)) {
-                        reverse_mapping_map[usage].push_back((map_source_t){
-                            .usage = usage,
-                            .layer_mask = unmapped_layers,
-                            .input_state = get_state_ptr(usage, 0),
-                        });
-                    }
-                // }
+    for (auto const& array_usage : our_array_range_usages) {
+        for (uint32_t usage = array_usage.usage; usage <= array_usage.usage_def.usage_maximum; usage++) {
+            if (assign_state_slot(usage, 0, false)) {
+                reverse_mapping_map[usage].push_back((map_source_t){
+                    .usage = usage,
+                    .input_state = get_state_ptr(usage, 0),
+                });
             }
         }
+    }
 
-        for (auto const& [report_id, usage_map] : their_usages[OUR_OUT_INTERFACE]) {
-            for (auto const& [usage, usage_def] : usage_map) {
-                // uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
-                // if (unmapped_layers) {
-                    if (assign_state_slot(usage, 0, false)) {
-                        reverse_mapping_map[usage].push_back((map_source_t){
-                            .usage = usage,
-                            .layer_mask = unmapped_layers,
-                            .input_state = get_state_ptr(usage, 0),
-                        });
-                    }
-                // }
+    for (auto const& [report_id, usage_map] : their_usages[OUR_OUT_INTERFACE]) {
+        for (auto const& [usage, usage_def] : usage_map) {
+            if (assign_state_slot(usage, 0, false)) {
+                reverse_mapping_map[usage].push_back((map_source_t){
+                    .usage = usage,
+                    .input_state = get_state_ptr(usage, 0),
+                });
             }
         }
     }
@@ -340,9 +321,7 @@ void set_mapping_from_config() {
                 }
             }
         }
-        if ((target & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
-            reverse_mapping_layers.push_back(rev_map);
-        } else {
+        if ((target & 0xFFFF0000) != LAYERS_USAGE_PAGE) {
             reverse_mapping.push_back(rev_map);
         }
     }
@@ -396,9 +375,6 @@ void process_mapping(bool auto_repeat) {
     frame_counter++;
 
 
-    layer_state_mask = 1;
-
-
     for (auto const& reg_ptr : register_ptrs) {
         *reg_ptr.state_ptr = *reg_ptr.register_ptr;
     }
@@ -423,15 +399,13 @@ void process_mapping(bool auto_repeat) {
                 }
                 int32_t value = 0;
                 if (auto_repeat || map_source.is_relative) {
-                    if (layer_state_mask & map_source.layer_mask) {
-                        value = *map_source.input_state;
-                        if (map_source.is_binary) {
-                            value = !!value;
-                        }
-                        value *= map_source.scaling;
-                        if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                            value /= 1000;
-                        }
+                    value = *map_source.input_state;
+                    if (map_source.is_binary) {
+                        value = !!value;
+                    }
+                    value *= map_source.scaling;
+                    if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
+                        value /= 1000;
                     }
                 }
                 if (value != 0) {
@@ -449,29 +423,27 @@ void process_mapping(bool auto_repeat) {
                     !(active_ports_mask & (1 << map_source.orig_source_port))) {
                     continue;
                 }
-                if ((layer_state_mask & map_source.layer_mask)) {
-                    if (map_source.tap || map_source.hold) {
-                        value += 1 * map_source.scaling / 1000 - rev_map.default_value;
-                    }
-                    if (!map_source.tap && !map_source.hold) {
-                        if (map_source.is_relative && !register_target) {
-                            if (*map_source.input_state * map_source.scaling > 0) {
-                                value += 1;
+                if (map_source.tap || map_source.hold) {
+                    value += 1 * map_source.scaling / 1000 - rev_map.default_value;
+                }
+                if (!map_source.tap && !map_source.hold) {
+                    if (map_source.is_relative && !register_target) {
+                        if (*map_source.input_state * map_source.scaling > 0) {
+                            value += 1;
+                        }
+                    } else {
+                        if ((*map_source.input_state != 0) || (rev_map.default_value != 0)) {
+                            int32_t candidate = *map_source.input_state;
+                            if (map_source.is_binary) {
+                                candidate = !!candidate;
                             }
-                        } else {
-                            if ((*map_source.input_state != 0) || (rev_map.default_value != 0)) {
-                                int32_t candidate = *map_source.input_state;
-                                if (map_source.is_binary) {
-                                    candidate = !!candidate;
+                            if ((candidate != 0) || !map_source.is_binary) {
+                                candidate = (int64_t) candidate * map_source.scaling / 1000;
+                                if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
+                                    candidate /= 1000;
                                 }
-                                if ((candidate != 0) || !map_source.is_binary) {
-                                    candidate = (int64_t) candidate * map_source.scaling / 1000;
-                                    if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                                        candidate /= 1000;
-                                    }
-                                    if (candidate != rev_map.default_value) {
-                                        value += candidate - rev_map.default_value;
-                                    }
+                                if (candidate != rev_map.default_value) {
+                                    value += candidate - rev_map.default_value;
                                 }
                             }
                         }
@@ -1110,7 +1082,6 @@ void print_stats() {
 void reset_state() {
     memset(registers, 0, sizeof(registers));
     accumulated.clear();
-    layer_state_mask = 1;
     frame_counter = 0;
 }
 

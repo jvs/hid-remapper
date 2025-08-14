@@ -22,7 +22,6 @@ volatile bool suspended = false;
 volatile bool resume_pending = false;
 volatile bool config_updated = false;
 
-uint8_t unmapped_passthrough_layer_mask = 0b11111111;
 uint32_t partial_scroll_timeout = 1000000;
 uint64_t gpio_debounce_time = 5000;
 uint8_t our_descriptor_number = 0;
