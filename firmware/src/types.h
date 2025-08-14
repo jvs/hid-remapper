@@ -49,7 +49,6 @@ enum class Op : int8_t {
     CLAMP = 18,
     SCALING = 19,
     LAYER_STATE = 20,
-    STICKY_STATE = 21,
     TAP_STATE = 22,
     HOLD_STATE = 23,
     BITWISE_OR = 24,
@@ -95,7 +94,6 @@ struct tap_hold_state_t {
 struct map_source_t {
     uint32_t usage;
     int32_t scaling = 1000;  // * 1000
-    bool sticky = false;
     bool tap = false;
     bool hold = false;
     bool is_relative = false;
@@ -104,7 +102,6 @@ struct map_source_t {
     uint8_t layer_mask = 1;
     int32_t* input_state;
     tap_hold_state_t* tap_hold_state;
-    uint8_t* sticky_state;
     int32_t accumulated_scroll;
     uint64_t last_scroll_timestamp;  // XXX we can make this 32 or less bits
 };
@@ -131,18 +128,6 @@ struct tap_hold_usage_t {
     int32_t* input_state;
     tap_hold_state_t* tap_hold_state;
     uint64_t pressed_at;
-};
-
-struct sticky_usage_t {
-    int32_t* input_state;
-    uint8_t* sticky_state;
-    uint8_t layer_mask;
-};
-
-struct tap_hold_sticky_usage_t {
-    uint8_t layer_mask;
-    tap_hold_state_t* tap_hold_state;
-    uint8_t* sticky_state;
 };
 
 struct usage_rle_t {

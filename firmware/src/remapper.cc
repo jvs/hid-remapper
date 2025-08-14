@@ -17,7 +17,6 @@
 
 #define MAX_REPORT_SIZE 64
 
-const uint8_t MAPPING_FLAG_STICKY = 1 << 0;
 const uint8_t MAPPING_FLAG_TAP = 1 << 1;
 const uint8_t MAPPING_FLAG_HOLD = 1 << 2;
 
@@ -51,10 +50,8 @@ std::unordered_map<uint16_t, std::unordered_map<uint8_t, std::vector<usage_usage
 std::unordered_map<uint16_t, std::unordered_map<uint8_t, std::vector<int32_t*>>> array_range_usages;          // dev_addr+interface -> report_id -> input_state ptr vector
 std::unordered_map<uint16_t, std::unordered_map<uint8_t, std::vector<usage_def_t>>> rollover_usages;          // dev_addr+interface -> report_id -> usage_def vector
 
-std::vector<sticky_usage_t> sticky_usages;
-std::vector<tap_hold_sticky_usage_t> tap_sticky_usages;
-std::vector<tap_hold_sticky_usage_t> hold_sticky_usages;
 std::vector<tap_hold_usage_t> tap_hold_usages;
+
 
 std::vector<usage_usage_def_t> our_array_range_usages;
 
@@ -78,7 +75,6 @@ std::vector<uint8_t> report_ids;
 
 int32_t input_state[MAX_INPUT_STATES * 2];
 tap_hold_state_t tap_hold_state[MAX_INPUT_STATES];
-uint8_t sticky_state[MAX_INPUT_STATES];                  // state per layer (mask)
 std::unordered_map<uint64_t, int32_t*> usage_state_ptr;  // usage -> input_state pointer
 uint32_t used_state_slots = 0;
 
@@ -220,20 +216,9 @@ inline tap_hold_state_t* get_tap_hold_state_ptr(uint32_t usage, uint8_t hub_port
     return NULL;
 }
 
-inline uint8_t* get_sticky_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_absent = false) {
-    int32_t* state_ptr = get_state_ptr(usage, hub_port, assign_if_absent);
-    if (state_ptr != NULL) {
-        return sticky_state + (state_ptr - input_state);
-    }
-
-    return NULL;
-}
 
 void set_mapping_from_config() {
     std::unordered_map<uint64_t, std::vector<map_source_t>> reverse_mapping_map;  // hub_port+target -> sources list
-    std::unordered_map<uint64_t, uint8_t> sticky_usage_map;
-    std::unordered_map<uint64_t, uint8_t> tap_sticky_usage_map;
-    std::unordered_map<uint64_t, uint8_t> hold_sticky_usage_map;
     std::unordered_set<uint64_t> tap_hold_usage_set;
     std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
 
@@ -245,7 +230,6 @@ void set_mapping_from_config() {
     register_ptrs.clear();
     memset(input_state, 0, sizeof(input_state));
     memset(tap_hold_state, 0, sizeof(tap_hold_state));
-    memset(sticky_state, 0, sizeof(sticky_state));
     uint32_t gpio_in_mask_ = 0;
     uint32_t gpio_out_mask_ = 0;
 
@@ -260,15 +244,8 @@ void set_mapping_from_config() {
         uint8_t target_port = (mapping.hub_ports >> 4) & 0x0F;
         if ((mapping.target_usage & 0xFFFF0000) == LAYERS_USAGE_PAGE) {
             uint16_t layer = mapping.target_usage & 0xFFFF;
-            if (mapping.flags & MAPPING_FLAG_STICKY) {
-                // sticky layer-triggering mappings are forces to NOT be present on the layer they trigger
-                layer_mask &= ~(1 << layer);
-                // but for unmapped passthrough purposes we pretend they are
-                mapped_on_layers[mapping.source_usage] |= (1 << layer) & ((1 << NLAYERS) - 1);
-            } else {
-                // non-sticky layer-triggering mappings are forced to BE present on the layer they trigger
-                layer_mask |= (1 << layer) & ((1 << NLAYERS) - 1);
-            }
+            // layer-triggering mappings are forced to BE present on the layer they trigger
+            layer_mask |= (1 << layer) & ((1 << NLAYERS) - 1);
         }
 
         if ((mapping.target_usage & 0xFFFF0000) == GPIO_USAGE_PAGE) {
@@ -285,14 +262,12 @@ void set_mapping_from_config() {
             reverse_mapping_map[((uint64_t) target_port << 32) | mapping.target_usage].push_back((map_source_t){
                 .usage = mapping.source_usage,
                 .scaling = mapping.scaling,
-                .sticky = (mapping.flags & MAPPING_FLAG_STICKY) != 0,
                 .tap = (mapping.flags & MAPPING_FLAG_TAP) != 0,
                 .hold = (mapping.flags & MAPPING_FLAG_HOLD) != 0,
                 .orig_source_port = orig_source_port,
                 .layer_mask = layer_mask,
                 .input_state = get_state_ptr(mapping.source_usage, source_port),
                 .tap_hold_state = get_tap_hold_state_ptr(mapping.source_usage, source_port),
-                .sticky_state = get_sticky_state_ptr(mapping.source_usage, source_port),
             });
 
             if ((mapping.source_usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
@@ -303,18 +278,6 @@ void set_mapping_from_config() {
             }
         }
         mapped_on_layers[mapping.source_usage] |= layer_mask;  // usage mapped on any hub_port is considered to be mapped
-        if ((mapping.flags & MAPPING_FLAG_STICKY) != 0) {
-            if (mapping.flags & MAPPING_FLAG_TAP) {
-                tap_sticky_usage_map[((uint64_t) source_port << 32) | mapping.source_usage] |= layer_mask;
-            }
-            if (mapping.flags & MAPPING_FLAG_HOLD) {
-                hold_sticky_usage_map[((uint64_t) source_port << 32) | mapping.source_usage] |= layer_mask;
-            }
-            if (((mapping.flags & MAPPING_FLAG_TAP) == 0) &&
-                ((mapping.flags & MAPPING_FLAG_HOLD) == 0)) {
-                sticky_usage_map[((uint64_t) source_port << 32) | mapping.source_usage] |= layer_mask;
-            }
-        }
         if (((mapping.flags & MAPPING_FLAG_TAP) != 0) ||
             ((mapping.flags & MAPPING_FLAG_HOLD) != 0)) {
             tap_hold_usage_set.insert(((uint64_t) source_port << 32) | mapping.source_usage);
@@ -322,47 +285,7 @@ void set_mapping_from_config() {
     }
 
 
-    sticky_usages.clear();
     tap_hold_usages.clear();
-    tap_sticky_usages.clear();
-    hold_sticky_usages.clear();
-
-    for (auto const& [hub_port_usage, layer_mask] : sticky_usage_map) {
-        uint32_t usage = hub_port_usage & 0xFFFFFFFF;
-        uint8_t hub_port = hub_port_usage >> 32;
-        int32_t* state_ptr = get_state_ptr(usage, hub_port);
-        if (state_ptr != NULL) {
-            sticky_usages.push_back((sticky_usage_t){
-                .input_state = state_ptr,
-                .sticky_state = get_sticky_state_ptr(usage, hub_port),
-                .layer_mask = layer_mask,
-            });
-        }
-    }
-
-    for (auto const& [hub_port_usage, layer_mask] : tap_sticky_usage_map) {
-        uint32_t usage = hub_port_usage & 0xFFFFFFFF;
-        uint8_t hub_port = hub_port_usage >> 32;
-        if (get_state_ptr(usage, hub_port) != NULL) {
-            tap_sticky_usages.push_back((tap_hold_sticky_usage_t){
-                .layer_mask = layer_mask,
-                .tap_hold_state = get_tap_hold_state_ptr(usage, hub_port),
-                .sticky_state = get_sticky_state_ptr(usage, hub_port),
-            });
-        }
-    }
-
-    for (auto const& [hub_port_usage, layer_mask] : hold_sticky_usage_map) {
-        uint32_t usage = hub_port_usage & 0xFFFFFFFF;
-        uint8_t hub_port = hub_port_usage >> 32;
-        if (get_state_ptr(usage, hub_port) != NULL) {
-            hold_sticky_usages.push_back((tap_hold_sticky_usage_t){
-                .layer_mask = layer_mask,
-                .tap_hold_state = get_tap_hold_state_ptr(usage, hub_port),
-                .sticky_state = get_sticky_state_ptr(usage, hub_port),
-            });
-        }
-    }
 
     for (auto const hub_port_usage : tap_hold_usage_set) {
         uint32_t usage = hub_port_usage & 0xFFFFFFFF;
@@ -435,7 +358,7 @@ void set_mapping_from_config() {
             // and a default of zero is not good, but the proper way to solve this would be
             // to not execute mappings with unplugged sources.
             for (auto const& source : sources) {
-                if (!source.sticky && !source.tap && !source.hold && (source.scaling == 1000)) {
+                if (!source.tap && !source.hold && (source.scaling == 1000)) {
                     *(source.input_state) = rev_map.default_value;
                 }
             }
@@ -446,7 +369,7 @@ void set_mapping_from_config() {
             (target == (DIGIPOT_USAGE_PAGE | 3))) {
             rev_map.default_value = 128;
             for (auto const& source : sources) {
-                if (!source.sticky && !source.tap && !source.hold && (source.scaling == 1000)) {
+                if (!source.tap && !source.hold && (source.scaling == 1000)) {
                     *(source.input_state) = 128;
                 }
             }
@@ -584,53 +507,16 @@ void process_mapping(bool auto_repeat) {
             (now - tap_hold.pressed_at >= tap_hold_threshold);
     }
 
-    for (auto const& sticky : sticky_usages) {
-        if ((layer_state_mask & sticky.layer_mask) &&
-            ((*(sticky.input_state + PREV_STATE_OFFSET) == 0) && (*sticky.input_state != 0))) {
-            *sticky.sticky_state ^= (layer_state_mask & sticky.layer_mask);
-        }
-    }
-
-    for (auto& tap_sticky : tap_sticky_usages) {
-        if ((layer_state_mask & tap_sticky.layer_mask) && tap_sticky.tap_hold_state->tap) {
-            *tap_sticky.sticky_state ^= (layer_state_mask & tap_sticky.layer_mask);
-        }
-    }
-
-    for (auto& hold_sticky : hold_sticky_usages) {
-        if ((layer_state_mask & hold_sticky.layer_mask) &&
-            hold_sticky.tap_hold_state->hold && !hold_sticky.tap_hold_state->prev_hold) {
-            *hold_sticky.sticky_state ^= (layer_state_mask & hold_sticky.layer_mask);
-        }
-    }
 
     uint8_t new_layer_state_mask = 0;
     for (auto const& rev_map : reverse_mapping_layers) {
         uint16_t i = rev_map.target & 0xFFFF;
         for (auto const& map_source : rev_map.sources) {
-            if (!map_source.sticky) {
-                if ((map_source.layer_mask & layer_state_mask) &&
-                    (map_source.hold
-                            ? map_source.tap_hold_state->hold
-                            : *map_source.input_state)) {
-                    new_layer_state_mask |= 1 << i;
-                }
-            } else {  // is sticky
-                // This part is responsible for deactivating a layer if it was activated
-                // by a sticky mapping and the user pressed the button again.
-                // There must be a better way of handling this.
-                if (((!map_source.tap && !map_source.hold && (*(map_source.input_state + PREV_STATE_OFFSET) == 0) && (*map_source.input_state != 0)) ||
-                        (map_source.tap && map_source.tap_hold_state->tap) ||
-                        (map_source.hold && map_source.tap_hold_state->hold && !map_source.tap_hold_state->prev_hold)) &&
-                    (*map_source.sticky_state & map_source.layer_mask) &&
-                    (layer_state_mask & (1 << i))) {
-                    *map_source.sticky_state &= ~map_source.layer_mask;
-                }
-
-                // Sticky mapping works even if it's not present on the currently active layers.
-                if (*map_source.sticky_state & map_source.layer_mask) {
-                    new_layer_state_mask |= 1 << i;
-                }
+            if ((map_source.layer_mask & layer_state_mask) &&
+                (map_source.hold
+                        ? map_source.tap_hold_state->hold
+                        : *map_source.input_state)) {
+                new_layer_state_mask |= 1 << i;
             }
         }
     }
@@ -668,18 +554,14 @@ void process_mapping(bool auto_repeat) {
                 }
                 int32_t value = 0;
                 if (auto_repeat || map_source.is_relative) {
-                    if (map_source.sticky) {
-                        value = !!(*map_source.sticky_state & map_source.layer_mask) * map_source.scaling;
-                    } else {
-                        if (layer_state_mask & map_source.layer_mask) {
-                            value = map_source.hold ? map_source.tap_hold_state->hold : *map_source.input_state;
-                            if (map_source.is_binary) {
-                                value = !!value;
-                            }
-                            value *= map_source.scaling;
-                            if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                                value /= 1000;
-                            }
+                    if (layer_state_mask & map_source.layer_mask) {
+                        value = map_source.hold ? map_source.tap_hold_state->hold : *map_source.input_state;
+                        if (map_source.is_binary) {
+                            value = !!value;
+                        }
+                        value *= map_source.scaling;
+                        if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
+                            value /= 1000;
                         }
                     }
                 }
@@ -698,35 +580,29 @@ void process_mapping(bool auto_repeat) {
                     !(active_ports_mask & (1 << map_source.orig_source_port))) {
                     continue;
                 }
-                if (map_source.sticky) {
-                    if (*map_source.sticky_state & map_source.layer_mask) {
+                if ((layer_state_mask & map_source.layer_mask)) {
+                    if ((map_source.tap && map_source.tap_hold_state->tap) ||
+                        (map_source.hold && map_source.tap_hold_state->hold)) {
                         value += 1 * map_source.scaling / 1000 - rev_map.default_value;
                     }
-                } else {
-                    if ((layer_state_mask & map_source.layer_mask)) {
-                        if ((map_source.tap && map_source.tap_hold_state->tap) ||
-                            (map_source.hold && map_source.tap_hold_state->hold)) {
-                            value += 1 * map_source.scaling / 1000 - rev_map.default_value;
-                        }
-                        if (!map_source.tap && !map_source.hold) {
-                            if (map_source.is_relative && !register_target) {
-                                if (*map_source.input_state * map_source.scaling > 0) {
-                                    value += 1;
+                    if (!map_source.tap && !map_source.hold) {
+                        if (map_source.is_relative && !register_target) {
+                            if (*map_source.input_state * map_source.scaling > 0) {
+                                value += 1;
+                            }
+                        } else {
+                            if ((*map_source.input_state != 0) || (rev_map.default_value != 0)) {
+                                int32_t candidate = *map_source.input_state;
+                                if (map_source.is_binary) {
+                                    candidate = !!candidate;
                                 }
-                            } else {
-                                if ((*map_source.input_state != 0) || (rev_map.default_value != 0)) {
-                                    int32_t candidate = *map_source.input_state;
-                                    if (map_source.is_binary) {
-                                        candidate = !!candidate;
+                                if ((candidate != 0) || !map_source.is_binary) {
+                                    candidate = (int64_t) candidate * map_source.scaling / 1000;
+                                    if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
+                                        candidate /= 1000;
                                     }
-                                    if ((candidate != 0) || !map_source.is_binary) {
-                                        candidate = (int64_t) candidate * map_source.scaling / 1000;
-                                        if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                                            candidate /= 1000;
-                                        }
-                                        if (candidate != rev_map.default_value) {
-                                            value += candidate - rev_map.default_value;
-                                        }
+                                    if (candidate != rev_map.default_value) {
+                                        value += candidate - rev_map.default_value;
                                     }
                                 }
                             }
