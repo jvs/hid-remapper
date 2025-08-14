@@ -5,12 +5,16 @@
 #include "hardware/gpio.h"
 #include <cstring>
 
+// Constants from remapper.cc
+#define MAX_REPORT_SIZE 64
+#define OR_BUFSIZE 8
+
 // Keyboard and mouse report IDs from our_descriptor.cc
 extern const uint8_t REPORT_ID_KEYBOARD;
 extern const uint8_t REPORT_ID_MOUSE;
 
-// External queue variables from remapper.cc  
-extern uint8_t outgoing_reports[][MAX_REPORT_SIZE + 1];
+// External queue variables from remapper.cc
+extern uint8_t outgoing_reports[OR_BUFSIZE][MAX_REPORT_SIZE + 1];
 extern uint8_t or_tail;
 extern uint8_t or_items;
 extern uint16_t report_sizes[];
@@ -44,13 +48,13 @@ void jvs_init() {
 
 // Helper function to queue a keyboard report
 void queue_keyboard_report(const uint8_t* report_data, uint8_t size, uint32_t delay_ms = 0) {
-    if (or_items >= 8) return; // Queue full
-    
+    if (or_items >= OR_BUFSIZE) return; // Queue full
+
     if (delay_ms == 0) {
         // Send immediately
         outgoing_reports[or_tail][0] = REPORT_ID_KEYBOARD;
         memcpy(outgoing_reports[or_tail] + 1, report_data, size);
-        or_tail = (or_tail + 1) % 8;
+        or_tail = (or_tail + 1) % OR_BUFSIZE;
         or_items++;
     } else {
         // Queue for later
@@ -85,47 +89,47 @@ void send_hello_world() {
     // H (shift + h)
     send_key(0x02, 0x0B, 0);    // H
     send_key_release(50);
-    
+
     // e
     send_key(0x00, 0x08, 50);
     send_key_release(100);
-    
-    // l  
+
+    // l
     send_key(0x00, 0x0F, 100);
     send_key_release(150);
-    
+
     // l
     send_key(0x00, 0x0F, 150);
     send_key_release(200);
-    
+
     // o
     send_key(0x00, 0x12, 200);
     send_key_release(250);
-    
+
     // space
     send_key(0x00, 0x2C, 250);
     send_key_release(300);
-    
+
     // W (shift + w)
     send_key(0x02, 0x1A, 300);
     send_key_release(350);
-    
+
     // o
     send_key(0x00, 0x12, 350);
     send_key_release(400);
-    
+
     // r
     send_key(0x00, 0x15, 400);
     send_key_release(450);
-    
+
     // l
     send_key(0x00, 0x0F, 450);
     send_key_release(500);
-    
+
     // d
     send_key(0x00, 0x07, 500);
     send_key_release(550);
-    
+
     // !
     send_key(0x02, 0x1E, 550);
     send_key_release(600);
@@ -142,11 +146,11 @@ void jvs_handle_input(uint32_t usage, int32_t state) {
     if (usage == 0x000700E0 || usage == 0x000700E4) {
         ctrl_pressed = (state != 0);
     }
-    
+
     // Track Space key (0x0007002C)
     if (usage == 0x0007002C) {
         space_pressed = (state != 0);
-        
+
         // Detect Ctrl+Space combination
         if (ctrl_pressed && space_pressed && !ctrl_space_detected) {
             ctrl_space_detected = true;
@@ -163,26 +167,25 @@ void jvs_handle_input(uint32_t usage, int32_t state) {
         send_key(0x00, 0x05); // 0x05 is 'b'
         return; // Don't pass through the original 'a'
     }
-    
+
     // If we get here, pass through the original input
     // (Original hid-remapper processing would continue)
 }
 
 void jvs_process_mapping(bool auto_repeat) {
     // Update our time counter (simplified - in real implementation you'd use hardware timer)
-    static uint32_t last_time = 0;
     current_time_ms += 1; // Assume 1ms per call (adjust based on actual call frequency)
-    
+
     // Process queued events
     while (queue_head != queue_tail && event_queue[queue_head].active) {
         if (current_time_ms >= event_queue[queue_head].time_ms) {
             // Time to send this event
-            if (or_items < 8) { // Queue not full
+            if (or_items < OR_BUFSIZE) { // Queue not full
                 memcpy(outgoing_reports[or_tail], event_queue[queue_head].report, event_queue[queue_head].size);
-                or_tail = (or_tail + 1) % 8;
+                or_tail = (or_tail + 1) % OR_BUFSIZE;
                 or_items++;
             }
-            
+
             // Mark event as processed
             event_queue[queue_head].active = false;
             queue_head = (queue_head + 1) % 32;
