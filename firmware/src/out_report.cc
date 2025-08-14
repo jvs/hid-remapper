@@ -45,19 +45,6 @@ void do_queue_out_report(const uint8_t* report, uint16_t len, uint8_t report_id,
     oor_items++;
 }
 
-void do_queue_get_report(uint8_t report_id, uint8_t dev_addr, uint8_t interface, uint8_t len) {
-    if (oor_items == OOR_BUFSIZE) {
-        printf("out overflow!\n");
-        return;
-    }
-    outgoing_out_reports[oor_tail].dev_addr = dev_addr;
-    outgoing_out_reports[oor_tail].interface = interface;
-    outgoing_out_reports[oor_tail].report_id = report_id;
-    outgoing_out_reports[oor_tail].type = OutType::GET_FEATURE;
-    outgoing_out_reports[oor_tail].len = len;
-    oor_tail = (oor_tail + 1) % OOR_BUFSIZE;
-    oor_items++;
-}
 
 void do_send_out_report() {
     if ((oor_items > 0) && ready_to_send) {

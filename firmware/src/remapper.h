@@ -22,8 +22,6 @@ void process_mapping(bool auto_repeat);
 void update_their_descriptor_derivates();
 bool send_report(send_report_t do_send_report);
 void queue_out_report(uint16_t interface, uint8_t report_id, const uint8_t* buffer, uint8_t len);
-void queue_set_feature_report(uint16_t interface, uint8_t report_id, const uint8_t* buffer, uint8_t len);
-void queue_get_feature_report(uint16_t interface, uint8_t report_id, uint8_t len);
 void send_out_report();
 bool send_monitor_report(send_report_t do_send_report);
 void print_stats();

@@ -102,13 +102,6 @@ void queue_out_report(uint16_t interface, uint8_t report_id, const uint8_t* buff
     do_queue_out_report(buffer, len, report_id, interface >> 8, interface & 0xFF, OutType::OUTPUT);
 }
 
-void queue_set_feature_report(uint16_t interface, uint8_t report_id, const uint8_t* buffer, uint8_t len) {
-    do_queue_out_report(buffer, len, report_id, interface >> 8, interface & 0xFF, OutType::SET_FEATURE);
-}
-
-void queue_get_feature_report(uint16_t interface, uint8_t report_id, uint8_t len) {
-    do_queue_get_report(report_id, interface >> 8, interface & 0xFF, len);
-}
 
 void send_out_report() {
     do_send_out_report();
