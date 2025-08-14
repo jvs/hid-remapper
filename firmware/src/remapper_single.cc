@@ -48,11 +48,6 @@ void read_report(bool* new_report, bool* tick) {
     *new_report = reports_received;
 }
 
-void interval_override_updated() {
-}
-
-void flash_b_side() {
-}
 
 void descriptor_received_callback(uint16_t vendor_id, uint16_t product_id, const uint8_t* report_descriptor, int len, uint16_t interface, uint8_t hub_port, uint8_t itf_num) {
     parse_descriptor(vendor_id, product_id, report_descriptor, len, interface, itf_num);

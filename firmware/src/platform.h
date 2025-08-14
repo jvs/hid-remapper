@@ -9,7 +9,6 @@ void do_persist_config(uint8_t* buffer);
 void reset_to_bootloader();
 void pair_new_device();
 void clear_bonds();
-void flash_b_side();
 
 void my_mutexes_init();
 void my_mutex_enter(MutexId id);
