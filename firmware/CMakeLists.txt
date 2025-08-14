@@ -35,7 +35,6 @@ add_executable(remapper
     src/tinyusb_stuff.cc
     src/our_descriptor.cc
     src/globals.cc
-    src/config.cc
     src/quirks.cc
     src/interval_override.cc
     src/out_report.cc

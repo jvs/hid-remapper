@@ -9,7 +9,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "config.h"
 #include "descriptor_parser.h"
 #include "globals.h"
 #include "our_descriptor.h"
