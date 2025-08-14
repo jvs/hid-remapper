@@ -1088,7 +1088,28 @@ int32_t eval_expr(uint8_t expr, uint64_t now, bool auto_repeat) {
 }
 
 void process_mapping(bool auto_repeat) {
+    if (suspended) {
+        return;
+    }
+
+    // Call our custom processing
     jvs_process_mapping(auto_repeat);
+
+    // Copy current state to previous state (needed for input tracking)
+    memcpy(input_state + PREV_STATE_OFFSET, input_state, used_state_slots * sizeof(input_state[0]));
+
+    // THE CRITICAL PART: Process out_reports and send changed ones
+    for (auto const [interface_report_id, report] : out_reports) {
+        // XXX we assume everything is absolute
+        if (memcmp(report, prev_out_reports[interface_report_id], out_report_sizes[interface_report_id])) {
+            queue_out_report(interface_report_id >> 16, interface_report_id & 0xFF, report, out_report_sizes[interface_report_id]);
+            memcpy(prev_out_reports[interface_report_id], report, out_report_sizes[interface_report_id]);
+        }
+        memset(report, 0, out_report_sizes[interface_report_id]);
+    }
+}
+
+// void process_mapping(bool auto_repeat) {
     // if (suspended) {
     //     return;
     // }
@@ -1432,7 +1453,7 @@ void process_mapping(bool auto_repeat) {
     // }
     //
     // processing_time += get_time() - now;
-}
+// }
 
 bool send_report(send_report_t do_send_report) {
     if (suspended || (or_items == 0)) {
@@ -1737,7 +1758,7 @@ void set_input_state(uint32_t usage, int32_t state_raw, int32_t state_scaled, ui
     if (!jvs_handle_input(usage, state_raw)) {
         return;
     }
-    
+
     // Continue with normal hid-remapper state management
     int32_t* state_ptr = get_state_ptr(usage, hub_port, false, true);
     if (state_ptr != NULL) {

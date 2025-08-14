@@ -4,6 +4,7 @@
 #include "our_descriptor.h"
 #include "hardware/gpio.h"
 #include <cstring>
+#include <unordered_map>
 
 // Constants from remapper.cc
 #define MAX_REPORT_SIZE 64
@@ -13,11 +14,9 @@
 #define REPORT_ID_KEYBOARD 2
 #define REPORT_ID_MOUSE 1
 
-// External queue variables from remapper.cc
-extern uint8_t outgoing_reports[OR_BUFSIZE][MAX_REPORT_SIZE + 1];
-extern uint8_t or_tail;
-extern uint8_t or_items;
-extern uint16_t report_sizes[];
+// External report maps from globals.h
+extern std::unordered_map<uint32_t, uint8_t*> out_reports;
+extern std::unordered_map<uint32_t, uint8_t> out_report_sizes;
 
 // State tracking
 static bool caps_lock_active = false;
@@ -28,6 +27,7 @@ static bool ctrl_space_detected = false;
 // Event queue for timed sequences
 struct QueuedEvent {
     uint32_t time_ms;
+    uint32_t interface_report_id;
     uint8_t report[16];
     uint8_t size;
     bool active;
@@ -48,22 +48,23 @@ void jvs_init() {
 
 // Helper function to queue a keyboard report
 void queue_keyboard_report(const uint8_t* report_data, uint8_t size, uint32_t delay_ms = 0) {
-    if (or_items >= OR_BUFSIZE) return; // Queue full
+    // Use OUR_OUT_INTERFACE as the interface for our generated reports
+    uint32_t interface_report_id = (OUR_OUT_INTERFACE << 16) | REPORT_ID_KEYBOARD;
 
     if (delay_ms == 0) {
-        // Send immediately
-        outgoing_reports[or_tail][0] = REPORT_ID_KEYBOARD;
-        memcpy(outgoing_reports[or_tail] + 1, report_data, size);
-        or_tail = (or_tail + 1) % OR_BUFSIZE;
-        or_items++;
+        // Send immediately to out_reports
+        auto report_it = out_reports.find(interface_report_id);
+        if (report_it != out_reports.end()) {
+            memcpy(report_it->second, report_data, size);
+        }
     } else {
         // Queue for later
         uint8_t next_tail = (queue_tail + 1) % 32;
         if (next_tail != queue_head) {
             event_queue[queue_tail].time_ms = current_time_ms + delay_ms;
-            event_queue[queue_tail].report[0] = REPORT_ID_KEYBOARD;
-            memcpy(event_queue[queue_tail].report + 1, report_data, size);
-            event_queue[queue_tail].size = size + 1;
+            event_queue[queue_tail].interface_report_id = interface_report_id;
+            memcpy(event_queue[queue_tail].report, report_data, size);
+            event_queue[queue_tail].size = size;
             event_queue[queue_tail].active = true;
             queue_tail = next_tail;
         }
@@ -160,7 +161,7 @@ bool jvs_handle_input(uint32_t usage, int32_t state) {
         } else if (!space_pressed) {
             ctrl_space_detected = false;
         }
-        
+
         return true; // Pass through space normally if not ctrl+space
     }
 
@@ -183,10 +184,9 @@ void jvs_process_mapping(bool auto_repeat) {
     while (queue_head != queue_tail && event_queue[queue_head].active) {
         if (current_time_ms >= event_queue[queue_head].time_ms) {
             // Time to send this event
-            if (or_items < OR_BUFSIZE) { // Queue not full
-                memcpy(outgoing_reports[or_tail], event_queue[queue_head].report, event_queue[queue_head].size);
-                or_tail = (or_tail + 1) % OR_BUFSIZE;
-                or_items++;
+            auto report_it = out_reports.find(event_queue[queue_head].interface_report_id);
+            if (report_it != out_reports.end()) {
+                memcpy(report_it->second, event_queue[queue_head].report, event_queue[queue_head].size);
             }
 
             // Mark event as processed
