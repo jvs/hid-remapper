@@ -135,16 +135,17 @@ void send_hello_world() {
     send_key_release(600);
 }
 
-void jvs_handle_input(uint32_t usage, int32_t state) {
+bool jvs_handle_input(uint32_t usage, int32_t state) {
     // Detect Caps Lock (usage 0x00070039)
     if (usage == 0x00070039 && state == 1) {
         caps_lock_active = !caps_lock_active;
-        return; // Don't pass through caps lock
+        return false; // Don't pass through caps lock
     }
 
     // Track Ctrl key (left ctrl: 0x000700E0, right ctrl: 0x000700E4)
     if (usage == 0x000700E0 || usage == 0x000700E4) {
         ctrl_pressed = (state != 0);
+        return true; // Pass through ctrl key normally
     }
 
     // Track Space key (0x0007002C)
@@ -155,21 +156,23 @@ void jvs_handle_input(uint32_t usage, int32_t state) {
         if (ctrl_pressed && space_pressed && !ctrl_space_detected) {
             ctrl_space_detected = true;
             send_hello_world();
-            return; // Don't pass through the space press
+            return false; // Don't pass through the space press
         } else if (!space_pressed) {
             ctrl_space_detected = false;
         }
+        
+        return true; // Pass through space normally if not ctrl+space
     }
 
     // Example 1: Remap 'a' to 'b' when caps lock is active
     if (caps_lock_active && usage == 0x00070004 && state != 0) {
         // Send 'b' instead of 'a'
         send_key(0x00, 0x05); // 0x05 is 'b'
-        return; // Don't pass through the original 'a'
+        return false; // Don't pass through the original 'a'
     }
 
-    // If we get here, pass through the original input
-    // (Original hid-remapper processing would continue)
+    // For all other events, pass through to normal hid-remapper processing
+    return true;
 }
 
 void jvs_process_mapping(bool auto_repeat) {

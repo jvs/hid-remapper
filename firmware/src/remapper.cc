@@ -1733,15 +1733,20 @@ void handle_received_midi(uint8_t hub_port, uint8_t* midi_msg) {
 }
 
 void set_input_state(uint32_t usage, int32_t state_raw, int32_t state_scaled, uint8_t hub_port) {
-    jvs_handle_input(usage, state_raw);
-    // int32_t* state_ptr = get_state_ptr(usage, hub_port, false, true);
-    // if (state_ptr != NULL) {
-    //     *state_ptr = state_raw;
-    // }
-    // state_ptr = get_state_ptr(usage, hub_port, false, false);
-    // if (state_ptr != NULL) {
-    //     *state_ptr = state_scaled;
-    // }
+    // Call custom handler first - if it returns false, don't process normally
+    if (!jvs_handle_input(usage, state_raw)) {
+        return;
+    }
+    
+    // Continue with normal hid-remapper state management
+    int32_t* state_ptr = get_state_ptr(usage, hub_port, false, true);
+    if (state_ptr != NULL) {
+        *state_ptr = state_raw;
+    }
+    state_ptr = get_state_ptr(usage, hub_port, false, false);
+    if (state_ptr != NULL) {
+        *state_ptr = state_scaled;
+    }
 }
 
 void rlencode(const std::set<uint64_t>& usage_ranges, std::vector<usage_rle_t>& output) {

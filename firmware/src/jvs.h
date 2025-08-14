@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void jvs_init();
-void jvs_handle_input(uint32_t usage, int32_t state_raw);
+bool jvs_handle_input(uint32_t usage, int32_t state_raw);
 void jvs_process_mapping(bool auto_repeat);
 
 #endif
