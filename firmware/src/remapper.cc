@@ -203,7 +203,7 @@ inline int32_t* get_state_ptr(uint32_t usage, uint8_t hub_port, bool assign_if_a
 
 void set_mapping_from_config() {
     std::unordered_map<uint64_t, std::vector<map_source_t>> reverse_mapping_map;  // hub_port+target -> sources list
-    std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
+    // std::unordered_map<uint32_t, uint8_t> mapped_on_layers;  // usage -> layer mask
 
 
     reverse_mapping.clear();
@@ -216,8 +216,8 @@ void set_mapping_from_config() {
 
     if (unmapped_passthrough_layer_mask) {
         for (auto const& [usage, usage_def] : our_usages_flat) {
-            uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
-            if (unmapped_layers) {
+            // uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
+            // if (unmapped_layers) {
                 if (assign_state_slot(usage, 0, false)) {
                     reverse_mapping_map[usage].push_back((map_source_t){
                         .usage = usage,
@@ -225,13 +225,13 @@ void set_mapping_from_config() {
                         .input_state = get_state_ptr(usage, 0),
                     });
                 }
-            }
+            // }
         }
 
         for (auto const& array_usage : our_array_range_usages) {
             for (uint32_t usage = array_usage.usage; usage <= array_usage.usage_def.usage_maximum; usage++) {
-                uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
-                if (unmapped_layers) {
+                // uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
+                // if (unmapped_layers) {
                     if (assign_state_slot(usage, 0, false)) {
                         reverse_mapping_map[usage].push_back((map_source_t){
                             .usage = usage,
@@ -239,14 +239,14 @@ void set_mapping_from_config() {
                             .input_state = get_state_ptr(usage, 0),
                         });
                     }
-                }
+                // }
             }
         }
 
         for (auto const& [report_id, usage_map] : their_usages[OUR_OUT_INTERFACE]) {
             for (auto const& [usage, usage_def] : usage_map) {
-                uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
-                if (unmapped_layers) {
+                // uint8_t unmapped_layers = unmapped_passthrough_layer_mask & ~mapped_on_layers[usage];
+                // if (unmapped_layers) {
                     if (assign_state_slot(usage, 0, false)) {
                         reverse_mapping_map[usage].push_back((map_source_t){
                             .usage = usage,
@@ -254,7 +254,7 @@ void set_mapping_from_config() {
                             .input_state = get_state_ptr(usage, 0),
                         });
                     }
-                }
+                // }
             }
         }
     }
