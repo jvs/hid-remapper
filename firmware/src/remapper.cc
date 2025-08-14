@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "config.h"
-#include "crc.h"
 #include "descriptor_parser.h"
 #include "globals.h"
 #include "our_descriptor.h"

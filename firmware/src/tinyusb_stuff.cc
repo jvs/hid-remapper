@@ -191,7 +191,7 @@ uint16_t tud_hid_get_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t
     if (itf == 0) {
         return handle_get_report0(report_id, buffer, reqlen);
     } else {
-        return handle_get_report1(report_id, buffer, reqlen);
+        return 0;
     }
 }
 
@@ -202,8 +202,6 @@ void tud_hid_set_report_cb(uint8_t itf, uint8_t report_id, hid_report_type_t rep
             buffer++;
         }
         handle_set_report0(report_id, buffer, bufsize);
-    } else {
-        handle_set_report1(report_id, buffer, bufsize);
     }
 }
 

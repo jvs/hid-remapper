@@ -3,7 +3,6 @@
 #include <unordered_set>
 
 #include "config.h"
-#include "crc.h"
 #include "globals.h"
 #include "interval_override.h"
 #include "our_descriptor.h"
@@ -20,11 +19,4 @@ PersistConfigReturnCode persist_config() {
 void reset_resolution_multiplier() {
     // reset hi-res scroll on reboots
     resolution_multiplier = 0;
-}
-
-uint16_t handle_get_report1(uint8_t report_id, uint8_t* buffer, uint16_t reqlen) {
-    return 0;
-}
-
-void handle_set_report1(uint8_t report_id, uint8_t const* buffer, uint16_t bufsize) {
 }

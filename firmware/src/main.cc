@@ -16,7 +16,6 @@
 
 #include "activity_led.h"
 #include "config.h"
-#include "crc.h"
 #include "descriptor_parser.h"
 #include "globals.h"
 #include "our_descriptor.h"

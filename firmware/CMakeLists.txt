@@ -31,7 +31,6 @@ add_executable(remapper
     src/main.cc
     src/remapper.cc
     src/remapper_single.cc
-    src/crc.cc
     src/descriptor_parser.cc
     src/tinyusb_stuff.cc
     src/our_descriptor.cc
