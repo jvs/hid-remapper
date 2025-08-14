@@ -5,35 +5,6 @@
 #include <cstddef>
 #include <vector>
 
-enum class ConfigCommand : int8_t {
-    NO_COMMAND = 0,
-    RESET_INTO_BOOTSEL = 1,
-    SET_CONFIG = 2,
-    GET_CONFIG = 3,
-    CLEAR_MAPPING = 4,
-    ADD_MAPPING = 5,
-    GET_MAPPING = 6,
-    PERSIST_CONFIG = 7,
-    GET_OUR_USAGES = 8,
-    GET_THEIR_USAGES = 9,
-    SUSPEND = 10,
-    RESUME = 11,
-    PAIR_NEW_DEVICE = 12,
-    CLEAR_BONDS = 13,
-    FLASH_B_SIDE = 14,
-    CLEAR_MACROS = 15,
-    APPEND_TO_MACRO = 16,
-    GET_MACRO = 17,
-    INVALID_COMMAND = 18,
-    CLEAR_EXPRESSIONS = 19,
-    APPEND_TO_EXPRESSION = 20,
-    GET_EXPRESSION = 21,
-    SET_MONITOR_ENABLED = 22,
-    CLEAR_QUIRKS = 23,
-    ADD_QUIRK = 24,
-    GET_QUIRK = 25,
-};
-
 struct usage_def_t {
     uint8_t report_id;
     uint8_t size;
@@ -208,88 +179,6 @@ struct __attribute__((packed)) quirk_t {
     uint8_t size_flags;
 };
 
-struct __attribute__((packed)) persist_config_v12_t {
-    uint8_t version;
-    uint8_t flags;
-    uint8_t unmapped_passthrough_layer_mask;
-    uint32_t partial_scroll_timeout;
-    uint16_t mapping_count;
-    uint8_t interval_override;
-    uint32_t tap_hold_threshold;
-    uint8_t gpio_debounce_time_ms;
-    uint8_t our_descriptor_number;
-    uint8_t macro_entry_duration;
-    uint16_t quirk_count;
-};
-
-typedef persist_config_v12_t persist_config_v13_t;
-
-typedef persist_config_v13_t persist_config_v18_t;
-
-typedef persist_config_v18_t persist_config_t;
-
-struct __attribute__((packed)) get_config_t {
-    uint8_t version;
-    uint8_t flags;
-    uint8_t unmapped_passthrough_layer_mask;
-    uint32_t partial_scroll_timeout;
-    uint16_t mapping_count;
-    uint32_t our_usage_count;
-    uint32_t their_usage_count;
-    uint8_t interval_override;
-    uint32_t tap_hold_threshold;
-    uint8_t gpio_debounce_time_ms;
-    uint8_t our_descriptor_number;
-    uint8_t macro_entry_duration;
-    uint16_t quirk_count;
-};
-
-struct __attribute__((packed)) set_config_t {
-    uint8_t flags;
-    uint8_t unmapped_passthrough_layer_mask;
-    uint32_t partial_scroll_timeout;
-    uint8_t interval_override;
-    uint32_t tap_hold_threshold;
-    uint8_t gpio_debounce_time_ms;
-    uint8_t our_descriptor_number;
-    uint8_t macro_entry_duration;
-};
-
-struct __attribute__((packed)) get_indexed_t {
-    uint32_t requested_index;
-};
-
-#define MACRO_ITEMS_IN_PACKET 6
-
-struct __attribute__((packed)) append_to_macro_t {
-    uint8_t macro;
-    uint8_t nitems;
-    uint32_t usages[MACRO_ITEMS_IN_PACKET];
-};
-
-struct __attribute__((packed)) crc32_t {
-    uint32_t crc32;
-};
-
-struct __attribute__((packed)) get_macro_t {
-    uint32_t requested_macro;
-    uint32_t requested_macro_item;
-};
-
-struct __attribute__((packed)) get_macro_response_t {
-    uint8_t nitems;
-    uint32_t usages[MACRO_ITEMS_IN_PACKET];
-};
-
-struct __attribute__((packed)) macro_item_t {
-    uint32_t usage;
-};
-
-#define NUSAGES_IN_PACKET 3
-
-struct __attribute__((packed)) usages_list_t {
-    usage_rle_t usages[NUSAGES_IN_PACKET];
-};
 
 enum class MutexId : int8_t {
     THEIR_USAGES,
@@ -299,38 +188,10 @@ enum class MutexId : int8_t {
     N
 };
 
-struct __attribute__((packed)) expr_val_t {
-    uint32_t val;
-};
-
-struct __attribute__((packed)) get_expr_t {
-    uint32_t requested_expr;
-    uint32_t requested_expr_elem;
-};
-
-struct __attribute__((packed)) append_to_expr_t {
-    uint8_t expr;
-    uint8_t nelems;
-    uint8_t elem_data[24];
-};
-
-struct __attribute__((packed)) get_expr_response_t {
-    uint8_t nelems;
-    uint8_t elem_data[27];
-};
-
 enum class PersistConfigReturnCode : int8_t {
     UNKNOWN = 0,
     SUCCESS = 1,
     CONFIG_TOO_BIG = 2,
-};
-
-struct __attribute__((packed)) persist_config_response_t {
-    PersistConfigReturnCode return_code;
-};
-
-struct __attribute__((packed)) monitor_t {
-    uint8_t enabled;
 };
 
 struct __attribute__((packed)) monitor_report_item_t {
@@ -342,10 +203,6 @@ struct __attribute__((packed)) monitor_report_item_t {
 struct __attribute__((packed)) monitor_report_t {
     uint8_t report_id;
     monitor_report_item_t items[7];
-};
-
-struct __attribute__((packed)) uint16_val_t {
-    uint16_t val;
 };
 
 #endif
