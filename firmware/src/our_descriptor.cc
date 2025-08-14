@@ -267,259 +267,259 @@ const uint8_t our_report_descriptor_absolute[] = {
     0xC0,                      // End Collection
 };
 
-const uint8_t our_report_descriptor_horipad[] = {
-    0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
-    0x09, 0x05,        // Usage (Game Pad)
-    0xA1, 0x01,        // Collection (Application)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x01,        //   Logical Maximum (1)
-    0x35, 0x00,        //   Physical Minimum (0)
-    0x45, 0x01,        //   Physical Maximum (1)
-    0x75, 0x01,        //   Report Size (1)
-    0x95, 0x0E,        //   Report Count (14)
-    0x05, 0x09,        //   Usage Page (Button)
-    0x19, 0x01,        //   Usage Minimum (0x01)
-    0x29, 0x0E,        //   Usage Maximum (0x0E)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x95, 0x02,        //   Report Count (2)
-    0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
-    0x25, 0x07,        //   Logical Maximum (7)
-    0x46, 0x3B, 0x01,  //   Physical Maximum (315)
-    0x75, 0x04,        //   Report Size (4)
-    0x95, 0x01,        //   Report Count (1)
-    0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
-    0x09, 0x39,        //   Usage (Hat switch)
-    0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
-    0x65, 0x00,        //   Unit (None)
-    0x95, 0x01,        //   Report Count (1)
-    0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-    0x46, 0xFF, 0x00,  //   Physical Maximum (255)
-    0x09, 0x30,        //   Usage (X)
-    0x09, 0x31,        //   Usage (Y)
-    0x09, 0x32,        //   Usage (Z)
-    0x09, 0x35,        //   Usage (Rz)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x04,        //   Report Count (4)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x01,        //   Report Count (1)
-    0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0xC0,              // End Collection
-};
-
-uint8_t const our_report_descriptor_ps4[] = {
-    0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
-    0x09, 0x05,        // Usage (Game Pad)
-    0xA1, 0x01,        // Collection (Application)
-    0x85, 0x01,        //   Report ID (1)
-    0x09, 0x30,        //   Usage (X)
-    0x09, 0x31,        //   Usage (Y)
-    0x09, 0x32,        //   Usage (Z)
-    0x09, 0x35,        //   Usage (Rz)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x04,        //   Report Count (4)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x09, 0x39,        //   Usage (Hat switch)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x07,        //   Logical Maximum (7)
-    0x35, 0x00,        //   Physical Minimum (0)
-    0x46, 0x3B, 0x01,  //   Physical Maximum (315)
-    0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
-    0x75, 0x04,        //   Report Size (4)
-    0x95, 0x01,        //   Report Count (1)
-    0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
-    0x65, 0x00,        //   Unit (None)
-    0x05, 0x09,        //   Usage Page (Button)
-    0x19, 0x01,        //   Usage Minimum (0x01)
-    0x29, 0x0E,        //   Usage Maximum (0x0E)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x01,        //   Logical Maximum (1)
-    0x75, 0x01,        //   Report Size (1)
-    0x95, 0x0E,        //   Report Count (14)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
-    0x09, 0x20,        //   Usage (0x20)
-    0x75, 0x06,        //   Report Size (6)
-    0x95, 0x01,        //   Report Count (1)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
-    0x09, 0x33,        //   Usage (Rx)
-    0x09, 0x34,        //   Usage (Ry)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x02,        //   Report Count (2)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
-    0x09, 0x21,        //   Usage (0x21)
-    0x95, 0x36,        //   Report Count (54)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x85, 0x05,        //   Report ID (5)
-    0x09, 0x22,        //   Usage (0x22)
-    0x95, 0x1F,        //   Report Count (31)
-    0x91, 0x02,        //   Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0x85, 0x03,        //   Report ID (3)
-    0x0A, 0x21, 0x27,  //   Usage (0x2721)
-    0x95, 0x2F,        //   Report Count (47)
-    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0x06, 0x80, 0xFF,  //   Usage Page (Vendor Defined 0xFF80)
-    0x85, 0xE0,        //   Report ID (-32)
-    0x09, 0x57,        //   Usage (0x57)
-    0x95, 0x02,        //   Report Count (2)
-    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0xC0,              // End Collection
-    0x06, 0xF0, 0xFF,  // Usage Page (Vendor Defined 0xFFF0)
-    0x09, 0x40,        // Usage (0x40)
-    0xA1, 0x01,        // Collection (Application)
-    0x85, 0xF0,        //   Report ID (-16)
-    0x09, 0x47,        //   Usage (0x47)
-    0x95, 0x3F,        //   Report Count (63)
-    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0x85, 0xF1,        //   Report ID (-15)
-    0x09, 0x48,        //   Usage (0x48)
-    0x95, 0x3F,        //   Report Count (63)
-    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0x85, 0xF2,        //   Report ID (-14)
-    0x09, 0x49,        //   Usage (0x49)
-    0x95, 0x0F,        //   Report Count (15)
-    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0x85, 0xF3,        //   Report ID (-13)
-    0x0A, 0x01, 0x47,  //   Usage (0x4701)
-    0x95, 0x07,        //   Report Count (7)
-    0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0xC0,              // End Collection
-};
-
-uint8_t const our_report_descriptor_stadia[] = {
-    0x05, 0x01,                    // Usage Page (Generic Desktop Ctrls)
-    0x09, 0x05,                    // Usage (Game Pad)
-    0xA1, 0x01,                    // Collection (Application)
-    0x85, 0x03,                    //   Report ID (3)
-    0x05, 0x01,                    //   Usage Page (Generic Desktop Ctrls)
-    0x75, 0x04,                    //   Report Size (4)
-    0x95, 0x01,                    //   Report Count (1)
-    0x25, 0x07,                    //   Logical Maximum (7)
-    0x46, 0x3B, 0x01,              //   Physical Maximum (315)
-    0x65, 0x14,                    //   Unit (System: English Rotation, Length: Centimeter)
-    0x09, 0x39,                    //   Usage (Hat switch)
-    0x81, 0x42,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
-    0x45, 0x00,                    //   Physical Maximum (0)
-    0x65, 0x00,                    //   Unit (None)
-    0x75, 0x01,                    //   Report Size (1)
-    0x95, 0x04,                    //   Report Count (4)
-    0x81, 0x01,                    //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x05, 0x09,                    //   Usage Page (Button)
-    0x15, 0x00,                    //   Logical Minimum (0)
-    0x25, 0x01,                    //   Logical Maximum (1)
-    0x75, 0x01,                    //   Report Size (1)
-    0x95, 0x0F,                    //   Report Count (15)
-    0x09, 0x12,                    //   Usage (0x12)
-    0x09, 0x11,                    //   Usage (0x11)
-    0x09, 0x14,                    //   Usage (0x14)
-    0x09, 0x13,                    //   Usage (0x13)
-    0x09, 0x0D,                    //   Usage (0x0D)
-    0x09, 0x0C,                    //   Usage (0x0C)
-    0x09, 0x0B,                    //   Usage (0x0B)
-    0x09, 0x0F,                    //   Usage (0x0F)
-    0x09, 0x0E,                    //   Usage (0x0E)
-    0x09, 0x08,                    //   Usage (0x08)
-    0x09, 0x07,                    //   Usage (0x07)
-    0x09, 0x05,                    //   Usage (0x05)
-    0x09, 0x04,                    //   Usage (0x04)
-    0x09, 0x02,                    //   Usage (0x02)
-    0x09, 0x01,                    //   Usage (0x01)
-    0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x75, 0x01,                    //   Report Size (1)
-    0x95, 0x01,                    //   Report Count (1)
-    0x81, 0x01,                    //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x05, 0x01,                    //   Usage Page (Generic Desktop Ctrls)
-    0x15, 0x01,                    //   Logical Minimum (1)
-    0x26, 0xFF, 0x00,              //   Logical Maximum (255)
-    0x09, 0x01,                    //   Usage (Pointer)
-    0xA1, 0x00,                    //   Collection (Physical)
-    0x09, 0x30,                    //     Usage (X)
-    0x09, 0x31,                    //     Usage (Y)
-    0x75, 0x08,                    //     Report Size (8)
-    0x95, 0x02,                    //     Report Count (2)
-    0x81, 0x02,                    //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0xC0,                          //   End Collection
-    0x09, 0x01,                    //   Usage (Pointer)
-    0xA1, 0x00,                    //   Collection (Physical)
-    0x09, 0x32,                    //     Usage (Z)
-    0x09, 0x35,                    //     Usage (Rz)
-    0x75, 0x08,                    //     Report Size (8)
-    0x95, 0x02,                    //     Report Count (2)
-    0x81, 0x02,                    //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0xC0,                          //   End Collection
-    0x05, 0x02,                    //   Usage Page (Sim Ctrls)
-    0x75, 0x08,                    //   Report Size (8)
-    0x95, 0x02,                    //   Report Count (2)
-    0x15, 0x00,                    //   Logical Minimum (0)
-    0x26, 0xFF, 0x00,              //   Logical Maximum (255)
-    0x09, 0xC5,                    //   Usage (Brake)
-    0x09, 0xC4,                    //   Usage (Accelerator)
-    0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x05, 0x0C,                    //   Usage Page (Consumer)
-    0x15, 0x00,                    //   Logical Minimum (0)
-    0x25, 0x01,                    //   Logical Maximum (1)
-    0x09, 0xE9,                    //   Usage (Volume Increment)
-    0x09, 0xEA,                    //   Usage (Volume Decrement)
-    0x75, 0x01,                    //   Report Size (1)
-    0x95, 0x02,                    //   Report Count (2)
-    0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x09, 0xCD,                    //   Usage (Play/Pause)
-    0x95, 0x01,                    //   Report Count (1)
-    0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x95, 0x05,                    //   Report Count (5)
-    0x81, 0x01,                    //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x85, 0x05,                    //   Report ID (5)
-    0x06, 0x0F, 0x00,              //   Usage Page (PID Page)
-    0x09, 0x97,                    //   Usage (0x97)
-    0x75, 0x10,                    //   Report Size (16)
-    0x95, 0x02,                    //   Report Count (2)
-    0x27, 0xFF, 0xFF, 0x00, 0x00,  //   Logical Maximum (65535)
-    0x91, 0x02,                    //   Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
-    0xC0,                          // End Collection
-};
-
-uint8_t const our_report_descriptor_xac_compat[] = {
-    0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
-    0x09, 0x05,        // Usage (Game Pad)
-    0xA1, 0x01,        // Collection (Application)
-    0x09, 0x30,        //   Usage (X)
-    0x09, 0x31,        //   Usage (Y)
-    0x09, 0x32,        //   Usage (Z)
-    0x09, 0x35,        //   Usage (Rz)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-    0x75, 0x08,        //   Report Size (8)
-    0x95, 0x04,        //   Report Count (4)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0x09, 0x39,        //   Usage (Hat switch)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x07,        //   Logical Maximum (7)
-    0x35, 0x00,        //   Physical Minimum (0)
-    0x46, 0x3B, 0x01,  //   Physical Maximum (315)
-    0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
-    0x75, 0x04,        //   Report Size (4)
-    0x95, 0x01,        //   Report Count (1)
-    0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
-    0x65, 0x00,        //   Unit (None)
-    0x45, 0x00,        //   Physical Maximum (0)
-    0x05, 0x09,        //   Usage Page (Button)
-    0x19, 0x01,        //   Usage Minimum (0x01)
-    0x29, 0x0C,        //   Usage Maximum (0x0C)
-    0x15, 0x00,        //   Logical Minimum (0)
-    0x25, 0x01,        //   Logical Maximum (1)
-    0x75, 0x01,        //   Report Size (1)
-    0x95, 0x0C,        //   Report Count (12)
-    0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-    0xC0,              // End Collection
-};
+// const uint8_t our_report_descriptor_horipad[] = {
+//     0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+//     0x09, 0x05,        // Usage (Game Pad)
+//     0xA1, 0x01,        // Collection (Application)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x25, 0x01,        //   Logical Maximum (1)
+//     0x35, 0x00,        //   Physical Minimum (0)
+//     0x45, 0x01,        //   Physical Maximum (1)
+//     0x75, 0x01,        //   Report Size (1)
+//     0x95, 0x0E,        //   Report Count (14)
+//     0x05, 0x09,        //   Usage Page (Button)
+//     0x19, 0x01,        //   Usage Minimum (0x01)
+//     0x29, 0x0E,        //   Usage Maximum (0x0E)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x95, 0x02,        //   Report Count (2)
+//     0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
+//     0x25, 0x07,        //   Logical Maximum (7)
+//     0x46, 0x3B, 0x01,  //   Physical Maximum (315)
+//     0x75, 0x04,        //   Report Size (4)
+//     0x95, 0x01,        //   Report Count (1)
+//     0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
+//     0x09, 0x39,        //   Usage (Hat switch)
+//     0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
+//     0x65, 0x00,        //   Unit (None)
+//     0x95, 0x01,        //   Report Count (1)
+//     0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+//     0x46, 0xFF, 0x00,  //   Physical Maximum (255)
+//     0x09, 0x30,        //   Usage (X)
+//     0x09, 0x31,        //   Usage (Y)
+//     0x09, 0x32,        //   Usage (Z)
+//     0x09, 0x35,        //   Usage (Rz)
+//     0x75, 0x08,        //   Report Size (8)
+//     0x95, 0x04,        //   Report Count (4)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x75, 0x08,        //   Report Size (8)
+//     0x95, 0x01,        //   Report Count (1)
+//     0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0xC0,              // End Collection
+// };
+//
+// uint8_t const our_report_descriptor_ps4[] = {
+//     0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+//     0x09, 0x05,        // Usage (Game Pad)
+//     0xA1, 0x01,        // Collection (Application)
+//     0x85, 0x01,        //   Report ID (1)
+//     0x09, 0x30,        //   Usage (X)
+//     0x09, 0x31,        //   Usage (Y)
+//     0x09, 0x32,        //   Usage (Z)
+//     0x09, 0x35,        //   Usage (Rz)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+//     0x75, 0x08,        //   Report Size (8)
+//     0x95, 0x04,        //   Report Count (4)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x09, 0x39,        //   Usage (Hat switch)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x25, 0x07,        //   Logical Maximum (7)
+//     0x35, 0x00,        //   Physical Minimum (0)
+//     0x46, 0x3B, 0x01,  //   Physical Maximum (315)
+//     0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
+//     0x75, 0x04,        //   Report Size (4)
+//     0x95, 0x01,        //   Report Count (1)
+//     0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
+//     0x65, 0x00,        //   Unit (None)
+//     0x05, 0x09,        //   Usage Page (Button)
+//     0x19, 0x01,        //   Usage Minimum (0x01)
+//     0x29, 0x0E,        //   Usage Maximum (0x0E)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x25, 0x01,        //   Logical Maximum (1)
+//     0x75, 0x01,        //   Report Size (1)
+//     0x95, 0x0E,        //   Report Count (14)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+//     0x09, 0x20,        //   Usage (0x20)
+//     0x75, 0x06,        //   Report Size (6)
+//     0x95, 0x01,        //   Report Count (1)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
+//     0x09, 0x33,        //   Usage (Rx)
+//     0x09, 0x34,        //   Usage (Ry)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+//     0x75, 0x08,        //   Report Size (8)
+//     0x95, 0x02,        //   Report Count (2)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x06, 0x00, 0xFF,  //   Usage Page (Vendor Defined 0xFF00)
+//     0x09, 0x21,        //   Usage (0x21)
+//     0x95, 0x36,        //   Report Count (54)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x85, 0x05,        //   Report ID (5)
+//     0x09, 0x22,        //   Usage (0x22)
+//     0x95, 0x1F,        //   Report Count (31)
+//     0x91, 0x02,        //   Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0x85, 0x03,        //   Report ID (3)
+//     0x0A, 0x21, 0x27,  //   Usage (0x2721)
+//     0x95, 0x2F,        //   Report Count (47)
+//     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0x06, 0x80, 0xFF,  //   Usage Page (Vendor Defined 0xFF80)
+//     0x85, 0xE0,        //   Report ID (-32)
+//     0x09, 0x57,        //   Usage (0x57)
+//     0x95, 0x02,        //   Report Count (2)
+//     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0xC0,              // End Collection
+//     0x06, 0xF0, 0xFF,  // Usage Page (Vendor Defined 0xFFF0)
+//     0x09, 0x40,        // Usage (0x40)
+//     0xA1, 0x01,        // Collection (Application)
+//     0x85, 0xF0,        //   Report ID (-16)
+//     0x09, 0x47,        //   Usage (0x47)
+//     0x95, 0x3F,        //   Report Count (63)
+//     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0x85, 0xF1,        //   Report ID (-15)
+//     0x09, 0x48,        //   Usage (0x48)
+//     0x95, 0x3F,        //   Report Count (63)
+//     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0x85, 0xF2,        //   Report ID (-14)
+//     0x09, 0x49,        //   Usage (0x49)
+//     0x95, 0x0F,        //   Report Count (15)
+//     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0x85, 0xF3,        //   Report ID (-13)
+//     0x0A, 0x01, 0x47,  //   Usage (0x4701)
+//     0x95, 0x07,        //   Report Count (7)
+//     0xB1, 0x02,        //   Feature (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0xC0,              // End Collection
+// };
+//
+// uint8_t const our_report_descriptor_stadia[] = {
+//     0x05, 0x01,                    // Usage Page (Generic Desktop Ctrls)
+//     0x09, 0x05,                    // Usage (Game Pad)
+//     0xA1, 0x01,                    // Collection (Application)
+//     0x85, 0x03,                    //   Report ID (3)
+//     0x05, 0x01,                    //   Usage Page (Generic Desktop Ctrls)
+//     0x75, 0x04,                    //   Report Size (4)
+//     0x95, 0x01,                    //   Report Count (1)
+//     0x25, 0x07,                    //   Logical Maximum (7)
+//     0x46, 0x3B, 0x01,              //   Physical Maximum (315)
+//     0x65, 0x14,                    //   Unit (System: English Rotation, Length: Centimeter)
+//     0x09, 0x39,                    //   Usage (Hat switch)
+//     0x81, 0x42,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
+//     0x45, 0x00,                    //   Physical Maximum (0)
+//     0x65, 0x00,                    //   Unit (None)
+//     0x75, 0x01,                    //   Report Size (1)
+//     0x95, 0x04,                    //   Report Count (4)
+//     0x81, 0x01,                    //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x05, 0x09,                    //   Usage Page (Button)
+//     0x15, 0x00,                    //   Logical Minimum (0)
+//     0x25, 0x01,                    //   Logical Maximum (1)
+//     0x75, 0x01,                    //   Report Size (1)
+//     0x95, 0x0F,                    //   Report Count (15)
+//     0x09, 0x12,                    //   Usage (0x12)
+//     0x09, 0x11,                    //   Usage (0x11)
+//     0x09, 0x14,                    //   Usage (0x14)
+//     0x09, 0x13,                    //   Usage (0x13)
+//     0x09, 0x0D,                    //   Usage (0x0D)
+//     0x09, 0x0C,                    //   Usage (0x0C)
+//     0x09, 0x0B,                    //   Usage (0x0B)
+//     0x09, 0x0F,                    //   Usage (0x0F)
+//     0x09, 0x0E,                    //   Usage (0x0E)
+//     0x09, 0x08,                    //   Usage (0x08)
+//     0x09, 0x07,                    //   Usage (0x07)
+//     0x09, 0x05,                    //   Usage (0x05)
+//     0x09, 0x04,                    //   Usage (0x04)
+//     0x09, 0x02,                    //   Usage (0x02)
+//     0x09, 0x01,                    //   Usage (0x01)
+//     0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x75, 0x01,                    //   Report Size (1)
+//     0x95, 0x01,                    //   Report Count (1)
+//     0x81, 0x01,                    //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x05, 0x01,                    //   Usage Page (Generic Desktop Ctrls)
+//     0x15, 0x01,                    //   Logical Minimum (1)
+//     0x26, 0xFF, 0x00,              //   Logical Maximum (255)
+//     0x09, 0x01,                    //   Usage (Pointer)
+//     0xA1, 0x00,                    //   Collection (Physical)
+//     0x09, 0x30,                    //     Usage (X)
+//     0x09, 0x31,                    //     Usage (Y)
+//     0x75, 0x08,                    //     Report Size (8)
+//     0x95, 0x02,                    //     Report Count (2)
+//     0x81, 0x02,                    //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0xC0,                          //   End Collection
+//     0x09, 0x01,                    //   Usage (Pointer)
+//     0xA1, 0x00,                    //   Collection (Physical)
+//     0x09, 0x32,                    //     Usage (Z)
+//     0x09, 0x35,                    //     Usage (Rz)
+//     0x75, 0x08,                    //     Report Size (8)
+//     0x95, 0x02,                    //     Report Count (2)
+//     0x81, 0x02,                    //     Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0xC0,                          //   End Collection
+//     0x05, 0x02,                    //   Usage Page (Sim Ctrls)
+//     0x75, 0x08,                    //   Report Size (8)
+//     0x95, 0x02,                    //   Report Count (2)
+//     0x15, 0x00,                    //   Logical Minimum (0)
+//     0x26, 0xFF, 0x00,              //   Logical Maximum (255)
+//     0x09, 0xC5,                    //   Usage (Brake)
+//     0x09, 0xC4,                    //   Usage (Accelerator)
+//     0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x05, 0x0C,                    //   Usage Page (Consumer)
+//     0x15, 0x00,                    //   Logical Minimum (0)
+//     0x25, 0x01,                    //   Logical Maximum (1)
+//     0x09, 0xE9,                    //   Usage (Volume Increment)
+//     0x09, 0xEA,                    //   Usage (Volume Decrement)
+//     0x75, 0x01,                    //   Report Size (1)
+//     0x95, 0x02,                    //   Report Count (2)
+//     0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x09, 0xCD,                    //   Usage (Play/Pause)
+//     0x95, 0x01,                    //   Report Count (1)
+//     0x81, 0x02,                    //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x95, 0x05,                    //   Report Count (5)
+//     0x81, 0x01,                    //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x85, 0x05,                    //   Report ID (5)
+//     0x06, 0x0F, 0x00,              //   Usage Page (PID Page)
+//     0x09, 0x97,                    //   Usage (0x97)
+//     0x75, 0x10,                    //   Report Size (16)
+//     0x95, 0x02,                    //   Report Count (2)
+//     0x27, 0xFF, 0xFF, 0x00, 0x00,  //   Logical Maximum (65535)
+//     0x91, 0x02,                    //   Output (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position,Non-volatile)
+//     0xC0,                          // End Collection
+// };
+//
+// uint8_t const our_report_descriptor_xac_compat[] = {
+//     0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+//     0x09, 0x05,        // Usage (Game Pad)
+//     0xA1, 0x01,        // Collection (Application)
+//     0x09, 0x30,        //   Usage (X)
+//     0x09, 0x31,        //   Usage (Y)
+//     0x09, 0x32,        //   Usage (Z)
+//     0x09, 0x35,        //   Usage (Rz)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x26, 0xFF, 0x00,  //   Logical Maximum (255)
+//     0x75, 0x08,        //   Report Size (8)
+//     0x95, 0x04,        //   Report Count (4)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0x09, 0x39,        //   Usage (Hat switch)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x25, 0x07,        //   Logical Maximum (7)
+//     0x35, 0x00,        //   Physical Minimum (0)
+//     0x46, 0x3B, 0x01,  //   Physical Maximum (315)
+//     0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
+//     0x75, 0x04,        //   Report Size (4)
+//     0x95, 0x01,        //   Report Count (1)
+//     0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
+//     0x65, 0x00,        //   Unit (None)
+//     0x45, 0x00,        //   Physical Maximum (0)
+//     0x05, 0x09,        //   Usage Page (Button)
+//     0x19, 0x01,        //   Usage Minimum (0x01)
+//     0x29, 0x0C,        //   Usage Maximum (0x0C)
+//     0x15, 0x00,        //   Logical Minimum (0)
+//     0x25, 0x01,        //   Logical Maximum (1)
+//     0x75, 0x01,        //   Report Size (1)
+//     0x95, 0x0C,        //   Report Count (12)
+//     0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
+//     0xC0,              // End Collection
+// };
 
 void kb_mouse_handle_set_report(uint8_t report_id, const uint8_t* buffer, uint16_t reqlen) {
     if (report_id == REPORT_ID_MULTIPLIER && reqlen >= 1) {
@@ -541,73 +541,73 @@ uint16_t kb_mouse_handle_get_report(uint8_t report_id, uint8_t* buffer, uint16_t
     return 0;
 }
 
-static const uint8_t horipad_neutral[] = { 0x00, 0x00, 0x0F, 0x80, 0x80, 0x80, 0x80, 0x00 };
+// static const uint8_t horipad_neutral[] = { 0x00, 0x00, 0x0F, 0x80, 0x80, 0x80, 0x80, 0x00 };
 
-void horipad_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
-    memcpy(report, horipad_neutral, sizeof(horipad_neutral));
-}
+// void horipad_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
+//     memcpy(report, horipad_neutral, sizeof(horipad_neutral));
+// }
+//
+// void ps4_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
+//     memset(report, 0, len);
+//     report[0] = report[1] = report[2] = report[3] = 0x80;
+//     report[4] = 0x08;
+//     report[34] = report[38] = 0b10000000;  // touchpad, 1 means finger not touching
+// }
+//
+// static const uint8_t stadia_neutral[] = { 0x08, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00 };
+//
+// void stadia_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
+//     memcpy(report, stadia_neutral, sizeof(stadia_neutral));
+// }
+//
+// static const uint8_t xac_compat_neutral[] = { 0x80, 0x80, 0x80, 0x80, 0x08, 0x00 };
+//
+// void xac_compat_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
+//     memcpy(report, xac_compat_neutral, sizeof(xac_compat_neutral));
+// }
 
-void ps4_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
-    memset(report, 0, len);
-    report[0] = report[1] = report[2] = report[3] = 0x80;
-    report[4] = 0x08;
-    report[34] = report[38] = 0b10000000;  // touchpad, 1 means finger not touching
-}
-
-static const uint8_t stadia_neutral[] = { 0x08, 0x00, 0x00, 0x80, 0x80, 0x80, 0x80, 0x00, 0x00, 0x00 };
-
-void stadia_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
-    memcpy(report, stadia_neutral, sizeof(stadia_neutral));
-}
-
-static const uint8_t xac_compat_neutral[] = { 0x80, 0x80, 0x80, 0x80, 0x08, 0x00 };
-
-void xac_compat_clear_report(uint8_t* report, uint8_t report_id, uint16_t len) {
-    memcpy(report, xac_compat_neutral, sizeof(xac_compat_neutral));
-}
-
-int32_t horipad_default_value(uint32_t usage) {
-    switch (usage) {
-        case 0x00010039:
-            return 15;
-        case 0x00010030:
-        case 0x00010031:
-        case 0x00010032:
-        case 0x00010035:
-            return 0x80;
-        default:
-            return 0;
-    }
-}
-
-int32_t ps4_stadia_default_value(uint32_t usage) {
-    switch (usage) {
-        case 0x00010039:
-            return 8;
-        case 0x00010030:
-        case 0x00010031:
-        case 0x00010032:
-        case 0x00010035:
-            return 0x80;
-        default:
-            return 0;
-    }
-}
-
-void stadia_sanitize_report(uint8_t report_id, uint8_t* buffer, uint16_t len) {
-    if (buffer[3] == 0) {
-        buffer[3] = 1;
-    }
-    if (buffer[4] == 0) {
-        buffer[4] = 1;
-    }
-    if (buffer[5] == 0) {
-        buffer[5] = 1;
-    }
-    if (buffer[6] == 0) {
-        buffer[6] = 1;
-    }
-}
+// int32_t horipad_default_value(uint32_t usage) {
+//     switch (usage) {
+//         case 0x00010039:
+//             return 15;
+//         case 0x00010030:
+//         case 0x00010031:
+//         case 0x00010032:
+//         case 0x00010035:
+//             return 0x80;
+//         default:
+//             return 0;
+//     }
+// }
+//
+// int32_t ps4_stadia_default_value(uint32_t usage) {
+//     switch (usage) {
+//         case 0x00010039:
+//             return 8;
+//         case 0x00010030:
+//         case 0x00010031:
+//         case 0x00010032:
+//         case 0x00010035:
+//             return 0x80;
+//         default:
+//             return 0;
+//     }
+// }
+//
+// void stadia_sanitize_report(uint8_t report_id, uint8_t* buffer, uint16_t len) {
+//     if (buffer[3] == 0) {
+//         buffer[3] = 1;
+//     }
+//     if (buffer[4] == 0) {
+//         buffer[4] = 1;
+//     }
+//     if (buffer[5] == 0) {
+//         buffer[5] = 1;
+//     }
+//     if (buffer[6] == 0) {
+//         buffer[6] = 1;
+//     }
+// }
 
 const our_descriptor_def_t our_descriptors[] = {
     {
@@ -628,52 +628,52 @@ const our_descriptor_def_t our_descriptors[] = {
         .handle_set_report = kb_mouse_handle_set_report,
         .set_report_synchronous = kb_mouse_set_report_synchronous,
     },
-    {
-        .idx = 2,
-        .descriptor = our_report_descriptor_horipad,
-        .descriptor_length = sizeof(our_report_descriptor_horipad),
-        .vid = 0x0F0D,
-        .pid = 0x00C1,
-        .handle_received_report = do_handle_received_report,
-        .clear_report = horipad_clear_report,
-        .default_value = horipad_default_value,
-    },
-    {
-        .idx = 3,
-        .descriptor = our_report_descriptor_ps4,
-        .descriptor_length = sizeof(our_report_descriptor_ps4),
-        .vid = 0x054C,
-        .pid = 0x1234,
-        .device_connected = ps4_device_connected,
-        .device_disconnected = ps4_device_disconnected,
-        .main_loop_task = ps4_main_loop_task,
-        .handle_received_report = ps4_handle_received_report,
-        .handle_get_report = ps4_handle_get_report,
-        .handle_set_report = ps4_handle_set_report,
-        .handle_get_report_response = ps4_handle_get_report_response,
-        .handle_set_report_complete = ps4_handle_set_report_complete,
-        .clear_report = ps4_clear_report,
-        .default_value = ps4_stadia_default_value,
-    },
-    {
-        .idx = 4,
-        .descriptor = our_report_descriptor_stadia,
-        .descriptor_length = sizeof(our_report_descriptor_stadia),
-        .vid = 0x18D1,
-        .pid = 0x9400,
-        .handle_received_report = do_handle_received_report,
-        .clear_report = stadia_clear_report,
-        .default_value = ps4_stadia_default_value,
-        .sanitize_report = stadia_sanitize_report,
-    },
-    {
-        .idx = 5,
-        .descriptor = our_report_descriptor_xac_compat,
-        .descriptor_length = sizeof(our_report_descriptor_xac_compat),
-        .handle_received_report = do_handle_received_report,
-        .clear_report = xac_compat_clear_report,
-        .default_value = ps4_stadia_default_value,  // sic
-    },
+    // {
+    //     .idx = 2,
+    //     .descriptor = our_report_descriptor_horipad,
+    //     .descriptor_length = sizeof(our_report_descriptor_horipad),
+    //     .vid = 0x0F0D,
+    //     .pid = 0x00C1,
+    //     .handle_received_report = do_handle_received_report,
+    //     .clear_report = horipad_clear_report,
+    //     .default_value = horipad_default_value,
+    // },
+    // {
+    //     .idx = 3,
+    //     .descriptor = our_report_descriptor_ps4,
+    //     .descriptor_length = sizeof(our_report_descriptor_ps4),
+    //     .vid = 0x054C,
+    //     .pid = 0x1234,
+    //     .device_connected = ps4_device_connected,
+    //     .device_disconnected = ps4_device_disconnected,
+    //     .main_loop_task = ps4_main_loop_task,
+    //     .handle_received_report = ps4_handle_received_report,
+    //     .handle_get_report = ps4_handle_get_report,
+    //     .handle_set_report = ps4_handle_set_report,
+    //     .handle_get_report_response = ps4_handle_get_report_response,
+    //     .handle_set_report_complete = ps4_handle_set_report_complete,
+    //     .clear_report = ps4_clear_report,
+    //     .default_value = ps4_stadia_default_value,
+    // },
+    // {
+    //     .idx = 4,
+    //     .descriptor = our_report_descriptor_stadia,
+    //     .descriptor_length = sizeof(our_report_descriptor_stadia),
+    //     .vid = 0x18D1,
+    //     .pid = 0x9400,
+    //     .handle_received_report = do_handle_received_report,
+    //     .clear_report = stadia_clear_report,
+    //     .default_value = ps4_stadia_default_value,
+    //     .sanitize_report = stadia_sanitize_report,
+    // },
+    // {
+    //     .idx = 5,
+    //     .descriptor = our_report_descriptor_xac_compat,
+    //     .descriptor_length = sizeof(our_report_descriptor_xac_compat),
+    //     .handle_received_report = do_handle_received_report,
+    //     .clear_report = xac_compat_clear_report,
+    //     .default_value = ps4_stadia_default_value,  // sic
+    // },
 };
 
 const uint8_t config_report_descriptor[] = {
