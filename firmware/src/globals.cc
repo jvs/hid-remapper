@@ -17,6 +17,7 @@ uint32_t interface_index_in_use = 0;
 std::vector<usage_rle_t> our_usages_rle;
 std::vector<usage_rle_t> their_usages_rle;
 
+volatile bool need_to_persist_config = false;
 volatile bool their_descriptor_updated = false;
 volatile bool suspended = false;
 volatile bool resume_pending = false;
@@ -48,3 +49,5 @@ std::vector<quirk_t> quirks;
 
 bool boot_protocol_keyboard = false;
 bool boot_protocol_updated = false;
+
+volatile PersistConfigReturnCode persist_config_return_code = PersistConfigReturnCode::UNKNOWN;

@@ -5,11 +5,22 @@
 #include "config.h"
 #include "crc.h"
 #include "globals.h"
+#include "interval_override.h"
 #include "our_descriptor.h"
 #include "platform.h"
 #include "remapper.h"
 
+const uint8_t CONFIG_VERSION = 18;
 
+
+
+void load_config(const uint8_t* persisted_config) {
+}
+
+
+PersistConfigReturnCode persist_config() {
+    return PersistConfigReturnCode::SUCCESS;
+}
 
 void reset_resolution_multiplier() {
     // reset hi-res scroll on reboots
