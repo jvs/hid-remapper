@@ -15,7 +15,6 @@
 #include <pico/unique_id.h>
 
 #include "activity_led.h"
-#include "config.h"
 #include "descriptor_parser.h"
 #include "globals.h"
 #include "our_descriptor.h"
@@ -248,10 +247,6 @@ int main() {
             our_descriptor->main_loop_task();
         }
         send_out_report();
-        if (need_to_persist_config) {
-            persist_config_return_code = persist_config();
-            need_to_persist_config = false;
-        }
 
         print_stats_maybe();
 

@@ -197,12 +197,6 @@ enum class MutexId : int8_t {
     N
 };
 
-enum class PersistConfigReturnCode : int8_t {
-    UNKNOWN = 0,
-    SUCCESS = 1,
-    CONFIG_TOO_BIG = 2,
-};
-
 struct __attribute__((packed)) monitor_report_item_t {
     uint32_t usage;
     int32_t value;

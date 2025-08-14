@@ -4,8 +4,4 @@
 #include <stdint.h>
 #include <types.h>
 
-PersistConfigReturnCode persist_config();
-
-void reset_resolution_multiplier();
-
 #endif
