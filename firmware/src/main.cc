@@ -33,9 +33,6 @@
 #define CONFIG_OFFSET_IN_FLASH (PICO_FLASH_SIZE_BYTES - PERSISTED_CONFIG_SIZE)
 #endif
 
-#define FLASH_CONFIG_IN_MEMORY (((uint8_t*) XIP_BASE) + CONFIG_OFFSET_IN_FLASH)
-
-#define ADC_USAGE_PAGE 0xFFF80000
 
 uint64_t next_print = 0;
 
@@ -139,25 +136,6 @@ void write_gpio() {
     memset(gpio_out_state, 0, sizeof(gpio_out_state));
 }
 
-#ifdef ADC_ENABLED
-bool read_adc() {
-    bool changed = false;
-    for (int i = 0; i < NADCS; i++) {
-        adc_select_input(i);
-        uint16_t state = adc_read();
-        if (state != prev_adc_state[i]) {
-            changed = true;
-            prev_adc_state[i] = state;
-        }
-        uint32_t usage = ADC_USAGE_PAGE | i;
-        set_input_state(usage, state, state >> 4);
-        if (monitor_enabled) {
-            monitor_usage(usage, state, 0);
-        }
-    }
-    return changed;
-}
-#endif
 
 void do_persist_config(uint8_t* buffer) {
 #if !PICO_COPY_TO_RAM
@@ -211,14 +189,7 @@ uint64_t get_unique_id() {
 int main() {
     my_mutexes_init();
     gpio_pins_init();
-#ifdef I2C_ENABLED
-    our_i2c_init();
-#endif
-#ifdef ADC_ENABLED
-    adc_pins_init();
-#endif
     tick_init();
-    load_config(FLASH_CONFIG_IN_MEMORY);
     our_descriptor = &our_descriptors[our_descriptor_number];
     parse_our_descriptor();
     set_mapping_from_config();
@@ -247,14 +218,8 @@ int main() {
             if (gpio_state_changed) {
                 activity_led_on();
             }
-#ifdef ADC_ENABLED
-            read_adc();
-#endif
             process_mapping(true);
             write_gpio();
-#ifdef MCP4651_ENABLED
-            mcp4651_write();
-#endif
         }
         tud_task();
         if (boot_protocol_updated) {

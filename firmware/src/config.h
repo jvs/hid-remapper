@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <types.h>
 
-void load_config(const uint8_t* persisted_config);
 PersistConfigReturnCode persist_config();
 
 uint16_t handle_get_report1(uint8_t report_id, uint8_t* buffer, uint16_t reqlen);

@@ -1,6 +1,5 @@
 #include <cstring>
 
-#include "constants.h"
 #include "globals.h"
 #include "platform.h"
 #include "quirks.h"

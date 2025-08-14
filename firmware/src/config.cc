@@ -13,11 +13,6 @@
 const uint8_t CONFIG_VERSION = 18;
 
 
-
-void load_config(const uint8_t* persisted_config) {
-}
-
-
 PersistConfigReturnCode persist_config() {
     return PersistConfigReturnCode::SUCCESS;
 }
