@@ -9,9 +9,9 @@
 #define MAX_REPORT_SIZE 64
 #define OR_BUFSIZE 8
 
-// Keyboard and mouse report IDs from our_descriptor.cc
-extern const uint8_t REPORT_ID_KEYBOARD;
-extern const uint8_t REPORT_ID_MOUSE;
+// Keyboard and mouse report IDs (values from our_descriptor.cc)
+#define REPORT_ID_KEYBOARD 2
+#define REPORT_ID_MOUSE 1
 
 // External queue variables from remapper.cc
 extern uint8_t outgoing_reports[OR_BUFSIZE][MAX_REPORT_SIZE + 1];
