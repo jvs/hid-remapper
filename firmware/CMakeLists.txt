@@ -43,7 +43,6 @@ add_executable(remapper
     src/tick.cc
     src/activity_led.cc
     src/ps_auth.cc
-    src/app_driver.cc
 )
 
 if((PICO_BOARD STREQUAL "pico") OR (PICO_BOARD STREQUAL "pico2"))
