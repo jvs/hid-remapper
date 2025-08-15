@@ -391,7 +391,7 @@ void process_mapping(bool auto_repeat) {
                     value += 1 * map_source.scaling / 1000 - rev_map.default_value;
                 }
                 if (!map_source.tap && !map_source.hold) {
-                    if (map_source.is_relative && !register_target) {
+                    if (map_source.is_relative) {
                         if (*map_source.input_state * map_source.scaling > 0) {
                             value += 1;
                         }
