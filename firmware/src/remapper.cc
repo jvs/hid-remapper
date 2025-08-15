@@ -25,7 +25,6 @@ const uint8_t H_RESOLUTION_BITMASK = (1 << 2);
 const uint32_t V_SCROLL_USAGE = 0x00010038;
 const uint32_t H_SCROLL_USAGE = 0x000C0238;
 
-const uint32_t LAYERS_USAGE_PAGE = 0xFFF10000;
 const uint32_t REGISTER_USAGE_PAGE = 0xFFF50000;
 
 const uint32_t ROLLOVER_USAGE = 0x00070001;
@@ -80,10 +79,6 @@ uint32_t reports_sent;
 uint32_t processing_time;
 
 
-std::unordered_map<uint32_t, int32_t> monitor_input_state;
-uint8_t monitor_usages_queued = 0;
-monitor_report_t monitor_report[2] = { { .report_id = REPORT_ID_MONITOR }, { .report_id = REPORT_ID_MONITOR } };
-uint8_t monitor_report_idx = 0;
 
 #define NREGISTERS 32
 int32_t registers[NREGISTERS] = { 0 };
@@ -258,30 +253,12 @@ void set_mapping_from_config() {
                 }
             }
         }
-        if ((target == (DIGIPOT_USAGE_PAGE | 0)) ||
-            (target == (DIGIPOT_USAGE_PAGE | 1)) ||
-            (target == (DIGIPOT_USAGE_PAGE | 2)) ||
-            (target == (DIGIPOT_USAGE_PAGE | 3))) {
-            rev_map.default_value = 128;
-            for (auto const& source : sources) {
-                if (!source.tap && !source.hold && (source.scaling == 1000)) {
-                    *(source.input_state) = 128;
-                }
-            }
-        }
         if ((target & 0xFFFF0000) == GPIO_USAGE_PAGE) {
             rev_map.our_usages.push_back((out_usage_def_t){
                 .data = gpio_out_state,
                 .len = sizeof(gpio_out_state),
                 .size = 1,
                 .bitpos = (uint16_t) (target & 0xFFFF),
-            });
-        } else if ((target & 0xFFFF0000) == DIGIPOT_USAGE_PAGE) {
-            rev_map.our_usages.push_back((out_usage_def_t){
-                .data = (uint8_t*) digipot_state,
-                .len = sizeof(digipot_state),
-                .size = 9,
-                .bitpos = (uint16_t) ((target & 0xFFFF) * 16),
             });
         } else if ((target & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
             rev_map.our_usages.push_back((out_usage_def_t){
@@ -320,9 +297,7 @@ void set_mapping_from_config() {
                 }
             }
         }
-        if ((target & 0xFFFF0000) != LAYERS_USAGE_PAGE) {
-            reverse_mapping.push_back(rev_map);
-        }
+        reverse_mapping.push_back(rev_map);
     }
 
     set_gpio_inout_masks(0, 0);
@@ -380,12 +355,6 @@ void process_mapping(bool auto_repeat) {
 
 
     memcpy(input_state + PREV_STATE_OFFSET, input_state, used_state_slots * sizeof(input_state[0]));
-    digipot_state[0] = 128;
-    digipot_state[1] = 128;
-    digipot_state[2] = 128;
-    digipot_state[3] = 128;
-    digipot_state[4] = 0;
-    digipot_state[5] = 0;
 
     for (auto& rev_map : reverse_mapping) {
         uint32_t target = rev_map.target;
@@ -438,9 +407,6 @@ void process_mapping(bool auto_repeat) {
                             }
                             if ((candidate != 0) || !map_source.is_binary) {
                                 candidate = (int64_t) candidate * map_source.scaling / 1000;
-                                if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                                    candidate /= 1000;
-                                }
                                 if (candidate != rev_map.default_value) {
                                     value += candidate - rev_map.default_value;
                                 }
@@ -453,10 +419,7 @@ void process_mapping(bool auto_repeat) {
             if ((value < 0) && !register_target) {
                 value = 0;
             }
-            if (register_target) {
-                value *= 1000;
-            }
-            if ((value != rev_map.default_value) || register_target) {
+            if (value != rev_map.default_value) {
                 for (auto const& out_usage_def : rev_map.our_usages) {
                     if (out_usage_def.array_count == 0) {
                         uint32_t effective_value = value;
@@ -567,30 +530,7 @@ bool send_report(send_report_t do_send_report) {
     return sent;
 }
 
-bool send_monitor_report(send_report_t do_send_report) {
-    if ((monitor_usages_queued == 0) || suspended) {
-        return false;
-    }
 
-    bool sent = do_send_report(1, (uint8_t*) &monitor_report[monitor_report_idx], sizeof(monitor_report_t));
-
-    monitor_report_idx = (monitor_report_idx + 1) % 2;
-    memset(&(monitor_report[monitor_report_idx].items), 0, sizeof(monitor_report[0].items));
-    monitor_usages_queued = 0;
-
-    return sent;
-}
-
-void monitor_usage(uint32_t usage, int32_t value, uint8_t hub_port) {
-    if (monitor_usages_queued == sizeof(monitor_report[0].items) / sizeof(monitor_report[0].items[0])) {
-        return;
-    }
-    monitor_report[monitor_report_idx].items[monitor_usages_queued++] = {
-        .usage = usage,
-        .value = value,
-        .hub_port = hub_port,
-    };
-}
 
 inline void read_input(const uint8_t* report, int len, uint32_t source_usage, const usage_def_t& their_usage, uint8_t interface_idx) {
     int32_t value = 0;
@@ -665,64 +605,7 @@ inline void read_input_range(const uint8_t* report, int len, uint32_t source_usa
     }
 }
 
-inline void monitor_read_input(const uint8_t* report, int len, uint32_t source_usage, const usage_def_t& their_usage, uint8_t interface_idx, uint8_t hub_port) {
-    int32_t value = 0;
-    if (their_usage.is_array) {
-        for (unsigned int i = 0; i < their_usage.count; i++) {
-            uint32_t bits = get_bits(report, len, their_usage.bitpos + i * their_usage.size, their_usage.size);
-            if (((their_usage.index_mask == 0) && (bits == their_usage.index)) ||
-                (their_usage.index_mask & (1 << bits))) {
-                value = 1;
-                break;
-            }
-        }
-    } else {
-        value = get_bits(report, len, their_usage.bitpos, their_usage.size);
-        if ((their_usage.logical_minimum < 0) || (their_usage.logical_maximum < 0)) {
-            if (value & (1 << (their_usage.size - 1))) {
-                value |= 0xFFFFFFFF << their_usage.size;
-            }
-        }
-    }
 
-    if (their_usage.is_relative) {
-        if (value != 0) {
-            monitor_usage(source_usage, value, hub_port);
-        }
-    } else {
-        if ((their_usage.size == 1) || their_usage.is_array) {
-            if (value != (1 & (monitor_input_state[source_usage] >> interface_idx))) {
-                monitor_usage(source_usage, value, hub_port);
-            }
-            if (value) {
-                monitor_input_state[source_usage] |= 1 << interface_idx;
-            } else {
-                monitor_input_state[source_usage] &= ~(1 << interface_idx);
-            }
-        } else {
-            if (value != monitor_input_state[source_usage]) {
-                monitor_usage(source_usage, value, hub_port);
-            }
-            monitor_input_state[source_usage] = value;
-        }
-    }
-}
-
-inline void monitor_read_input_range(const uint8_t* report, int len, uint32_t source_usage, const usage_def_t& their_usage, uint8_t interface_idx, uint8_t hub_port) {
-    // is_array and !is_relative is implied
-    for (unsigned int i = 0; i < their_usage.count; i++) {
-        uint32_t bits = get_bits(report, len, their_usage.bitpos + i * their_usage.size, their_usage.size);
-        // XXX consider negative indexes
-        if ((bits >= their_usage.logical_minimum) &&
-            (bits <= their_usage.logical_minimum + their_usage.usage_maximum - source_usage)) {
-            uint32_t actual_usage = source_usage + bits - their_usage.logical_minimum;
-            // for array range inputs, "key-up" events (value=0) don't show up in the monitor
-            if (monitor_enabled && ((actual_usage & 0xFFFF) != 0)) {
-                monitor_usage(actual_usage, 1, hub_port);
-            }
-        }
-    }
-}
 
 void handle_received_report(const uint8_t* report, int len, uint16_t interface, uint8_t external_report_id) {
     if (our_descriptor->handle_received_report != nullptr) {
@@ -785,15 +668,6 @@ void do_handle_received_report(const uint8_t* report, int len, uint16_t interfac
         }
     }
 
-    if (monitor_enabled) {
-        for (auto const& [their_usage, their_usage_def] : their_usages[interface][report_id]) {
-            if (their_usage_def.usage_maximum == 0) {
-                monitor_read_input(report, len, their_usage, their_usage_def, interface_idx, hub_port);
-            } else {
-                monitor_read_input_range(report, len, their_usage, their_usage_def, interface_idx, hub_port);
-            }
-        }
-    }
 
     my_mutex_exit(MutexId::THEIR_USAGES);
 }
@@ -1079,12 +953,6 @@ void print_stats() {
 }
 
 
-void set_monitor_enabled(bool enabled) {
-    if (monitor_enabled != enabled) {
-        monitor_input_state.clear();
-        monitor_enabled = enabled;
-    }
-}
 
 void device_connected_callback(uint16_t interface, uint16_t vid, uint16_t pid, uint8_t hub_port) {
     hub_ports[interface >> 8] = (hub_port != 0) ? hub_port : HUB_PORT_NONE;
