@@ -1,0 +1,33 @@
+{
+    "name": "Pico Development",
+    "image": "mcr.microsoft.com/devcontainers/cpp:ubuntu-22.04",
+    
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {}
+    },
+    
+    "postCreateCommand": [
+        "bash", "-c", 
+        "apt-get update && apt-get install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential && cd /workspaces/hid-remapper/firmware && git clone https://github.com/raspberrypi/pico-sdk.git --depth 1 -b master && cd pico-sdk && git submodule update --init --depth 1"
+    ],
+    
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "twxs.cmake"
+            ],
+            "settings": {
+                "cmake.configureOnOpen": false
+            }
+        }
+    },
+    
+    "forwardPorts": [],
+    
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/workspaces/hid-remapper,type=bind,consistency=cached"
+    ]
+}

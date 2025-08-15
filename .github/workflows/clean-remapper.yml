@@ -1,0 +1,52 @@
+name: Build Clean Remapper
+
+on:
+  push:
+    paths:
+      - 'firmware/clean-remapper/**'
+      - '.github/workflows/clean-remapper.yml'
+  pull_request:
+    paths:
+      - 'firmware/clean-remapper/**'
+      - '.github/workflows/clean-remapper.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Set up Pico SDK
+      run: |
+        cd firmware
+        git clone https://github.com/raspberrypi/pico-sdk.git --depth 1 -b master
+        cd pico-sdk
+        git submodule update --init --depth 1
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+    
+    - name: Build clean remapper
+      run: |
+        cd firmware/clean-remapper
+        mkdir build
+        cd build
+        cmake ..
+        make -j$(nproc)
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: clean-remapper-firmware
+        path: |
+          firmware/clean-remapper/build/*.uf2
+          firmware/clean-remapper/build/*.elf
+          firmware/clean-remapper/build/*.bin
+        retention-days: 30
