@@ -62,6 +62,9 @@ target_link_libraries(remapper
     hardware_pio
     hardware_dma
     hardware_flash
+    hardware_i2c
+    hardware_gpio
+    hardware_clocks
     tinyusb_device
     tinyusb_host
     tinyusb_board
