@@ -45,6 +45,4 @@ jobs:
         name: clean-remapper-firmware
         path: |
           firmware/clean-remapper/build/*.uf2
-          firmware/clean-remapper/build/*.elf
-          firmware/clean-remapper/build/*.bin
-        retention-days: 30
+        retention-days: 10
