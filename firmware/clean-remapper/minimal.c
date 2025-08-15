@@ -1,17 +1,15 @@
 #include <pico/stdlib.h>
-#include <hardware/gpio.h>
+#include <bsp/board_api.h>
 
 int main() {
-    // Initialize the onboard LED
-    const uint LED_PIN = 25;  // Standard Pico LED pin
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
+    // Initialize board (this sets up the LED)
+    board_init();
     
-    // Blink forever
+    // Blink forever using the same method as hid-remapper
     while (true) {
-        gpio_put(LED_PIN, 1);
+        board_led_write(true);
         sleep_ms(250);
-        gpio_put(LED_PIN, 0);
+        board_led_write(false);
         sleep_ms(250);
     }
     
