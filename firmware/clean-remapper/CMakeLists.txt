@@ -20,6 +20,7 @@ add_executable(clean_remapper
 target_include_directories(clean_remapper PRIVATE
     .
     ../src
+    ../src/tusb_config_both
     ${PICO_TINYUSB_PATH}/src
     ${PICO_TINYUSB_PATH}/hw
 )
