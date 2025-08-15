@@ -23,12 +23,14 @@ target_include_directories(clean_remapper PRIVATE
     ../src/tusb_config_both
     ${PICO_TINYUSB_PATH}/src
     ${PICO_TINYUSB_PATH}/hw
+    ${PICO_PIO_USB_PATH}/src
 )
 
 target_link_libraries(clean_remapper
     pico_stdlib
     tinyusb_device
     tinyusb_board
+    tinyusb_pico_pio_usb
 )
 
 pico_set_binary_type(clean_remapper copy_to_ram)
