@@ -9,7 +9,10 @@
 #define OLED_I2C_PORT i2c1
 #define OLED_SDA_PIN 2
 #define OLED_SCL_PIN 3
-#define OLED_ADDR 0x3D
+#define OLED_ADDR_PRIMARY 0x3D
+#define OLED_ADDR_SECONDARY 0x3C
+
+static uint8_t oled_addr = OLED_ADDR_PRIMARY;
 #define OLED_WIDTH 128
 #define OLED_HEIGHT 64
 
@@ -36,14 +39,14 @@ static bool oled_ready = false;
 
 static void oled_send_command(uint8_t cmd) {
     uint8_t buf[2] = {0x00, cmd};
-    i2c_write_blocking(OLED_I2C_PORT, OLED_ADDR, buf, 2, false);
+    i2c_write_blocking(OLED_I2C_PORT, oled_addr, buf, 2, false);
 }
 
 static void oled_send_data(const uint8_t* data, size_t len) {
     uint8_t buf[len + 1];
     buf[0] = 0x40;  // Data mode
     memcpy(buf + 1, data, len);
-    i2c_write_blocking(OLED_I2C_PORT, OLED_ADDR, buf, len + 1, false);
+    i2c_write_blocking(OLED_I2C_PORT, oled_addr, buf, len + 1, false);
 }
 
 bool oled_init(void) {
@@ -55,6 +58,19 @@ bool oled_init(void) {
     gpio_pull_up(OLED_SCL_PIN);
     
     sleep_ms(100);
+    
+    // Try to detect the correct I2C address
+    uint8_t test_data;
+    if (i2c_read_blocking(OLED_I2C_PORT, OLED_ADDR_PRIMARY, &test_data, 1, false) >= 0) {
+        oled_addr = OLED_ADDR_PRIMARY;
+        printf("OLED found at address 0x%02X\n", oled_addr);
+    } else if (i2c_read_blocking(OLED_I2C_PORT, OLED_ADDR_SECONDARY, &test_data, 1, false) >= 0) {
+        oled_addr = OLED_ADDR_SECONDARY;
+        printf("OLED found at address 0x%02X\n", oled_addr);
+    } else {
+        printf("OLED not found at either address!\n");
+        return false;
+    }
     
     // Initialize SSD1306
     oled_send_command(SSD1306_DISPLAYOFF);
