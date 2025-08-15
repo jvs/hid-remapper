@@ -358,7 +358,6 @@ void process_mapping(bool auto_repeat) {
 
     for (auto& rev_map : reverse_mapping) {
         uint32_t target = rev_map.target;
-        bool register_target = (target & 0xFFFF0000) == REGISTER_USAGE_PAGE;
         if (rev_map.is_relative) {
             for (auto& map_source : rev_map.sources) {
                 if ((map_source.orig_source_port != 0) &&
@@ -372,9 +371,6 @@ void process_mapping(bool auto_repeat) {
                         value = !!value;
                     }
                     value *= map_source.scaling;
-                    if ((map_source.usage & 0xFFFF0000) == REGISTER_USAGE_PAGE) {
-                        value /= 1000;
-                    }
                 }
                 if (value != 0) {
                     if (target == V_SCROLL_USAGE || target == H_SCROLL_USAGE) {
@@ -416,7 +412,7 @@ void process_mapping(bool auto_repeat) {
                 }
             }
             // we don't currently have any absolute usages that can be negative
-            if ((value < 0) && !register_target) {
+            if (value < 0) {
                 value = 0;
             }
             if (value != rev_map.default_value) {
