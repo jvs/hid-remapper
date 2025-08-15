@@ -32,7 +32,7 @@ bool custom_remap_key(uint32_t usage, int32_t* value) {
     // HID usage for 'A' key is 0x00070004
     const uint32_t A_KEY_USAGE = 0x00070004;
     // HID usage for 'B' key is 0x00070005
-    // const uint32_t B_KEY_USAGE = 0x00070005;  // Reserved for future use
+    const uint32_t B_KEY_USAGE = 0x00070005;
     
     // Track caps lock state
     if (usage == CAPS_LOCK_USAGE && *value > 0) {
@@ -103,13 +103,16 @@ void neopixel_set_color(uint8_t r, uint8_t g, uint8_t b) {
     neopixel_b = b;
     
     if (neopixel_enabled) {
-        // Simple implementation without interrupt disabling for now
-        // (WS2812 timing might be less precise but should still work)
+        // Disable interrupts during timing-critical operation
+        uint32_t interrupts = save_and_disable_interrupts();
         
         // WS2812 expects GRB order
         neopixel_send_byte(g);
         neopixel_send_byte(r);
         neopixel_send_byte(b);
+        
+        // Restore interrupts
+        restore_interrupts(interrupts);
         
         // Reset signal (>50us low)
         gpio_put(NEOPIXEL_PIN, 0);
@@ -229,7 +232,7 @@ void oled_update_status(const char* status) {
     
     // Send a simple pattern representing text
     uint8_t text_pattern[128] = {0};
-    for (size_t i = 0; i < strlen(status) && i < 16; i++) {
+    for (int i = 0; i < strlen(status) && i < 16; i++) {
         // Very basic character representation
         text_pattern[i * 8] = 0xFF;
         text_pattern[i * 8 + 1] = 0x81;
