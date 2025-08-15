@@ -21,7 +21,6 @@
 #include "platform.h"
 #include "remapper.h"
 #include "tick.h"
-#include "custom_logic.h"
 
 // RP2350 UF2s wipe the last sector of flash every time
 // because of RP2350-E10 errata mitigation. So we put
@@ -181,7 +180,6 @@ int main() {
     extra_init();
     tusb_init();
     stdio_init_all();
-    custom_logic_init();
 
     tud_sof_isr_set(sof_handler);
 
@@ -205,7 +203,6 @@ int main() {
             }
             process_mapping(true);
             write_gpio();
-            custom_logic_process();
         }
         tud_task();
         if (boot_protocol_updated) {
