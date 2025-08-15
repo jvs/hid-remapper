@@ -21,11 +21,9 @@ jobs:
       with:
         submodules: recursive
     
-    - name: Set up Pico SDK
+    - name: Update Pico SDK submodules
       run: |
-        cd firmware
-        git clone https://github.com/raspberrypi/pico-sdk.git --depth 1 -b master
-        cd pico-sdk
+        cd firmware/pico-sdk
         git submodule update --init --depth 1
     
     - name: Install dependencies
