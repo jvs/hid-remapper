@@ -19,10 +19,14 @@ add_executable(clean_remapper
 
 target_include_directories(clean_remapper PRIVATE
     .
+    ../src
+    ${PICO_TINYUSB_PATH}/src
+    ${PICO_TINYUSB_PATH}/hw
 )
 
 target_link_libraries(clean_remapper
     pico_stdlib
+    tinyusb_device
     tinyusb_board
 )
 
