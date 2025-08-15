@@ -14,6 +14,7 @@
 #include "our_descriptor.h"
 #include "platform.h"
 #include "remapper.h"
+#include "custom_logic.h"
 
 #define MAX_REPORT_SIZE 64
 
@@ -546,6 +547,12 @@ inline void read_input(const uint8_t* report, int len, uint32_t source_usage, co
                 value |= 0xFFFFFFFF << their_usage.size;
             }
         }
+    }
+
+    // Apply custom remapping logic
+    if (custom_remap_key(source_usage, &value)) {
+        // Custom logic handled this key, don't process further
+        return;
     }
 
     if (their_usage.is_relative) {
