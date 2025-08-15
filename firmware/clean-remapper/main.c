@@ -17,6 +17,11 @@ int main() {
     // Initialize system
     stdio_init_all();
     
+    // Initialize onboard LED for debugging
+    const uint LED_PIN = PICO_DEFAULT_LED_PIN;
+    gpio_init(LED_PIN);
+    gpio_set_dir(LED_PIN, GPIO_OUT);
+    
     printf("Clean Remapper - Step 1: Hello World\n");
     
     // Scan for I2C devices first
@@ -29,10 +34,15 @@ int main() {
         // Display hello world message
         oled_display_text("Hello World!");
         
-        // Keep the message visible and blink LED to show we're alive
+        // Keep the message visible and blink LED constantly
         while (true) {
+            // Blink LED
+            gpio_put(LED_PIN, 1);
+            sleep_ms(500);
+            gpio_put(LED_PIN, 0);
+            sleep_ms(500);
+            
             printf("Hello from clean remapper!\n");
-            sleep_ms(2000);
             
             // Update display every few seconds
             static int counter = 0;
@@ -43,8 +53,13 @@ int main() {
     } else {
         printf("Failed to initialize OLED\n");
         while (true) {
+            // Blink LED even if OLED fails
+            gpio_put(LED_PIN, 1);
+            sleep_ms(200);
+            gpio_put(LED_PIN, 0);
+            sleep_ms(200);
+            
             printf("OLED init failed - check connections\n");
-            sleep_ms(1000);
         }
     }
     
